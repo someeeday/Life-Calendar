@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ru" prefix="og: http://ogp.me/ns#">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Life Calendar</title>
+    <meta name="description" content="Календарь жизни. Life calendar">
+    <meta name="author" content="someeeday">
+    <meta property="og:title" content="Life calendar | Календарь жизни">
+    <meta property="og:description" content="Календарь жизни. Life calendar">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Life calendar">
+    <meta property="og:locale" content="ru_RU">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+    <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-3 hidden-print" id="calendar-settings">
+                <form>
+                    <div class="form-group">
+                        <label for="lang" id="lang_select_lang">Язык</label>
+                        <select class="form-control" id="lang">
+                            <option value="0">Русский</option>
+                            <option value="1">English</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="birthdate" id="lang_set_birthday">Введите вашу дату рождения (гггг-мм-дд):</label>
+                        <input type="date" id="birthdate" name="birthdate" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="theme" id="lang_set_theme">Тема</label>
+                        <select class="form-control" id="theme" onchange="applyTheme(this.value)">
+                            <option value="light">Light</option>
+                            <option value="dark">Dark</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <button type="button" class="btn btn-default" onclick="generateLifeCalendar()">Создать календарь</button>
+                    </div>
+                </form>
+            </div>
+            <div class="col-md-9">
+                <canvas id="lifeCanvas"></canvas>
+            </div>
+        </div>
+        <div class="row hidden-print">
+            <div class="col-md-12">
+                <p class="text-center"><small>&copy; 2025 <a href="https://your-website.com/">someeeday</a></small></p>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+    <!-- Yandex.Metrika counter -->
+    <script type="text/javascript">
+        (function(m,e,t,r,i,k,a){
+            m[i]=m[i]||function(){(m[i].a=m[i.a||[]).push(arguments)};
+            m[i].l=1*new Date();
+            k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+        })(window, document, "script", "https://cdn.jsdelivr.net/npm/yandex-metrica-watch/tag.js", "ym");
+        ym(YOUR_METRIKA_ID, "init", {
+            clickmap:true,
+            trackLinks:true,
+            accurateTrackBounce:true,
+            trackHash:true
+        });
+    </script>
+    <noscript><div><img src="https://mc.yandex.ru/watch/YOUR_METRIKA_ID" style="position:absolute; left:-9999px;" alt=""></div></noscript>
+    <!-- /Yandex.Metrika counter -->
+</body>
+</html>
