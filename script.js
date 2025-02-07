@@ -69,4 +69,4 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Установка приложения во весь экран
     window.Telegram.WebApp.expand();
-}); 
+});
