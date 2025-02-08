@@ -1,47 +1,137 @@
+/* 1. Основные переменные цветов и размеров */
 :root {
-    --background-color: #ffffff;
-    --text-color: #000000;
-    --container-background-color: #ffffff;
-    --container-text-color: #000000;
-    --button-background-color: #0088cc;
-    --button-text-color: #ffffff;
-    --canvas-border-color: #ccc;
+    /* Цвета для светлой темы */
+    --background-color: #ffffff;        /* Цвет фона страницы */
+    --text-color: #000000;             /* Цвет текста */
+    --container-background-color: #ffffff; /* Цвет фона контейнеров */
+    --container-text-color: #000000;    /* Цвет текста в контейнерах */
+    --button-background-color: #0088cc; /* Цвет фона кнопок */
+    --button-text-color: #ffffff;       /* Цвет текста кнопок */
+    --canvas-border-color: #ccc;        /* Цвет рамок canvas */
+    --sidebar-width: 300px;            /* Ширина боковой панели */
 }
 
+/* 2. Основные стили страницы */
 body {
-    font-family: 'Roboto', sans-serif;
+    font-family: var(--tg-font, 'Arial', sans-serif); /* Шрифт по умолчанию */
+    margin: 0;                          /* Убираем отступы */
+    padding: 20px;                      /* Внутренний отступ страницы */
+    min-height: 100vh;                  /* Минимальная высота - весь экран */
+    background-color: var(--background-color);
+    color: var(--text-color);
+    overflow-x: hidden;                 /* Скрыть горизонтальную прокрутку */
+}
+
+/* 3. Основной контейнер - разделение на две колонки */
+.container {
+    display: flex;                      /* Flexbox для разделения */
+    gap: 30px;                         /* Отступ между колонками */
+    max-width: 1800px;                 /* Максимальная ширина */
+    margin: 0 auto;                    /* Центрирование */
+    height: auto;                      /* Автоматическая высота */
+    flex-wrap: nowrap;                 /* Запрет на перенос строк */
+}
+
+/* 4. Стили панели настроек (левая колонка) */
+.calendar-settings {
+    background-color: var(--container-background-color);
+    max-width: var(--sidebar-width);    /* Максимальная ширина */
+    padding: 15px;                      /* Внутренние отступы */
+    border-radius: 10px;                /* Скругление углов */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Тень */
+    height: fit-content;                /* Высота по содержимому */
+    min-width: 200px;                   /* Минимальная ширина */
+    flex-shrink: 0;                     /* Запрет на сжатие */
+}
+
+/* 5. Стили контейнера календаря (правая колонка) */
+.calendar-container {
+    background-color: var(--container-background-color);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    overflow: visible;                  /* Убираем прокрутку внутри контейнера */
+    flex: 1;                           /* Растягивание на доступное пространство */
     display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+
+/* 6. Стили форм и элементов ввода */
+.form-group {
+    margin-bottom: 20px;               /* Отступ между группами формы */
+}
+
+.form-group label {
+    display: block;                    /* Каждая метка с новой строки */
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.form-control {
+    width: 100%;                       /* На всю ширину контейнера */
+    padding: 8px;
+    border: 1px solid var(--canvas-border-color);
+    border-radius: 5px;
     background-color: var(--background-color);
     color: var(--text-color);
 }
 
-.container {
-    text-align: center;
-    background-color: var(--container-background-color);
-    color: var(--container-text-color);
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-}
-
+/* 7. Стили кнопок */
 button {
+    width: 100%;                       /* На всю ширину */
     background-color: var(--button-background-color);
     color: var(--button-text-color);
     border: none;
-    padding: 10px 20px;
+    padding: 12px;
     border-radius: 5px;
-    cursor: pointer;
+    cursor: pointer;                   /* Курсор-указатель */
+    font-size: 16px;
 }
 
 button:hover {
-    opacity: 0.9;
+    opacity: 0.9;                      /* Эффект при наведении */
 }
 
+/* 8. Стили для canvas (календарь) */
 canvas {
-    margin-top: 20px;
-    border: 1px solid var(--canvas-border-color);
+    max-width: none;                   /* Отменяем ограничение ширины */
+    width: 100%;                       /* Ширина на всю доступную ширину */
+    height: auto;                      /* Автоматическая высота */
+    margin: 0;                         /* Убираем отступы */
+}
+
+/* 9. Адаптивная верстка для разных экранов */
+@media (max-width: 1024px) {
+    /* Стили для планшетов */
+    .container {
+        flex-direction: column;        /* Колонки в столбик */
+        height: auto;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Стили для мобильных устройств */
+    body {
+        padding: 10px;
+    }
+    .container {
+        flex-direction: column;        /* Колонки в столбик */
+    }
+    .calendar-settings {
+        width: auto;
+    }
+    .calendar-container {
+        min-height: 400px;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Стили для маленьких экранов */
+    .form-group {
+        margin-bottom: 15px;
+    }
+    .calendar-container {
+        min-height: 300px;
+    }
 }

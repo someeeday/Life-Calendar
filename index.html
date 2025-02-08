@@ -1,76 +1,64 @@
 <!DOCTYPE html>
-<html lang="ru" prefix="og: http://ogp.me/ns#">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Life Calendar</title>
-    <meta name="description" content="Календарь жизни. Life calendar">
+    <meta name="description" content="Life Calendar">  
     <meta name="author" content="someeeday">
-    <meta property="og:title" content="Life calendar | Календарь жизни">
-    <meta property="og:description" content="Календарь жизни. Life calendar">
-    <meta property="og:url" content="https://your-github-pages-url/">
-    <meta property="og:type" content="website">
-    <meta property="og:site_name" content="Life calendar">
-    <meta property="og:locale" content="ru_RU">
+    <link rel="icon" type="image/png" href="favicon.png">
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
     <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
-    <!-- Yandex.Metrika counter -->
-    <script type="text/javascript" >
-        (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-        m[i].l=1*new Date();
-        for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
-        k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
-        (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
-    
-        ym(99837348, "init", {
-            clickmap:true,
-            trackLinks:true,
-            accurateTrackBounce:true,
-            webvisor:true
-        });
-    </script>
-    <noscript><div><img src="https://mc.yandex.ru/watch/99837348" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
-    <!-- /Yandex.Metrika counter -->
 </head>
 <body>
     <div class="container">
-        <div class="row">
-            <div class="col-md-3 hidden-print" id="calendar-settings">
-                <form>
-                    <div class="form-group">
-                        <label for="lang" id="lang_select_lang">Язык</label>
-                        <select class="form-control" id="lang">
-                            <option value="0">Русский</option>
-                            <option value="1">English</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="birthdate" id="lang_set_birthday">Введите вашу дату рождения (гггг-мм-дд):</label>
-                        <input type="date" id="birthdate" name="birthdate" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label for="theme" id="lang_set_theme">Тема</label>
-                        <select class="form-control" id="theme" onchange="applyTheme(this.value)">
-                            <option value="light">Light</option>
-                            <option value="dark">Dark</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <button type="button" class="btn btn-default" onclick="generateLifeCalendar()">Создать календарь</button>
-                    </div>
-                </form>
-            </div>
-            <div class="col-md-9">
-                <canvas id="lifeCanvas"></canvas>
-            </div>
+        <div class="calendar-settings">
+            <form>
+                <div class="form-group">
+                    <label for="lang" id="lang_select_lang" 
+                            data-text-ru="Язык"
+                            data-text-en="Language">Язык</label>
+                    <select class="form-control" id="lang" onchange="changeLanguage(this.value)">
+                        <option value="ru">Русский</option>
+                        <option value="en">English</option>
+                    </select>
+                </div>
+                <div class="form-group">    
+                    <label for="birthdate" id="lang_set_birthday" 
+                            data-text-ru="Введите вашу дату рождения:" 
+                            data-text-en="Enter your birth date:">
+                        Введите вашу дату рождения:
+                    </label>
+                    <input type="date" id="birthdate" name="birthdate" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="theme" id="lang_set_theme" 
+                            data-text-ru="Тема" 
+                            data-text-en="Theme">Тема</label>
+                    <select class="form-control" id="theme" onchange="applyTheme(this.value)">
+                        <option value="light" 
+                                data-text-ru="Светлая" 
+                                data-text-en="Light">Светлая</option>
+                        <option value="dark" 
+                                data-text-ru="Тёмная" 
+                                data-text-en="Dark">Тёмная</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <button type="button" class="btn btn-default" 
+                            onclick="generateLifeCalendar()" 
+                            id="create_calendar_btn"
+                            data-text-ru="Создать календарь" 
+                            data-text-en="Create calendar">
+                        Создать календарь
+                    </button>
+                </div>
+            </form>
         </div>
-        <div class="row hidden-print">
-            <div class="col-md-12">
-                <p class="text-center"><small>&copy; 2025 <a href="https://your-website.com/">someeeday</a></small></p>
-            </div>
+        <div class="calendar-container">
+            <canvas id="lifeCanvas"></canvas>
         </div>
     </div>
     <script src="script.js"></script>
-</body>
+</body> 
 </html>
