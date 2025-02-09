@@ -135,3 +135,13 @@ canvas {
         min-height: 300px;
     }
 }
+
+.date-input {
+    padding: 8px;
+    border: 1px solid var(--canvas-border-color);
+    border-radius: 5px;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    box-sizing: border-box; /* Учитываем padding и border в ширину */
+    width: 100%;
+}

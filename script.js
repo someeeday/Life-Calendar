@@ -52,6 +52,12 @@ function applyTheme(theme) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    flatpickr("#birthdate", {
+        dateFormat: "Y-m-d",
+        maxDate: "today",
+        locale: document.documentElement.lang === 'ru' ? 'ru' : 'en'
+    });
+    
     // Восстанавливаем настройки из куки
     const savedLang = getCookie('lang') || 
                      window.Telegram.WebApp.initDataUnsafe?.user?.language_code || 
@@ -141,8 +147,8 @@ function createLifeGrid(livedWeeks, totalYears = 90) {
     // Подписи с переводом
     const lang = document.documentElement.lang || 'ru';
     const labels = {
-        ru: { age: 'Возраст →', weeks: 'Недели года →' },
-        en: { age: 'Age →', weeks: 'Weeks of the Year →' }
+        ru: { age: '← Возраст', weeks: 'Недели года →' },
+        en: { age: '← Age', weeks: 'Weeks of the Year →' }
     };
     
     // Обновляем позиции заголовков
@@ -150,8 +156,8 @@ function createLifeGrid(livedWeeks, totalYears = 90) {
     ctx.fillText(labels[lang].weeks, padding, padding - 40);
     
     ctx.save();
-    ctx.translate(padding - 40, padding + 32);
-    ctx.rotate(Math.PI / 2); // Поворачиваем текст на 90 градусов
+    ctx.translate(padding - 40, padding + 20);
+    ctx.rotate(-Math.PI / 2); // Поворачиваем текст на 90 градусов
     ctx.textAlign = 'center';
     ctx.fillText(labels[lang].age, 0, 0);
     ctx.restore();
@@ -164,8 +170,12 @@ function createLifeGrid(livedWeeks, totalYears = 90) {
     }
 
     for (let i = 0; i < weekNumbers.length; i++) {
-        const x = padding + (i * 5) * (cellSize + cellGap) - cellSize / 2 - 1;
-        ctx.fillText(weekNumbers[i].toString(), x, padding - 20);
+        const x = padding + (i * 5) * (cellSize + cellGap) - cellSize / 2;
+        if (i === 0) {
+            ctx.fillText(weekNumbers[i].toString(), x + (cellSize + cellGap + 15) / 2, padding - 20);
+        } else {
+            ctx.fillText(weekNumbers[i].toString(), x - 2, padding - 20);
+        }
     }
     
     // Рисуем цифры возраста (по центру ячеек)
@@ -208,10 +218,10 @@ function generateLifeCalendar() {
     }
     
     try {
-        // Сохраняем дату в куки на год
+        const formattedBirthdate = formatDate(birthdate);
         setCookie('birthdate', birthdate, 365);
         
-        const birthDate = new Date(birthdate);
+        const birthDate = new Date(formattedBirthdate);
         const currentDate = new Date();
         
         if (birthDate > currentDate) {
@@ -254,3 +264,14 @@ function saveSettings(lang, theme, birthdate) {
     }
 }
 
+function formatDate(date) {
+    const d = new Date(date);
+    let month = '' + (d.getMonth() + 1);
+    let day = '' + d.getDate();
+    const year = d.getFullYear();
+
+    if (month.length < 2) month = '0' + month;
+    if (day.length < 2) day = '0' + day;
+
+    return [year, month, day].join('-');
+}
