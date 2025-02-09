@@ -1,18 +1,21 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <title>Life Calendar</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <title>Life Calendar</title>
     <meta name="description" content="Life Calendar">  
     <meta name="author" content="someeeday">
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
 </head>
 <body>
+    <header>
+        <h1>Life Calendar</h1>
+    </header>
     <div class="container">
         <div class="calendar-settings">
             <form>
@@ -27,9 +30,8 @@
                 </div>
                 <div class="form-group">
                     <label for="birthdate" id="lang_set_birthday" 
-                            data-text-ru="Введите вашу дату рождения:" 
-                            data-text-en="Enter your birth date:">
-                        Введите вашу дату рождения:
+                            data-text-ru="Дата рождения" 
+                            data-text-en="Birth date">
                     </label>
                     <input type="text" id="birthdate" name="birthdate" class="form-control date-input">
                 </div>

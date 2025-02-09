@@ -12,6 +12,7 @@ function changeLanguage(lang) {
     if (document.getElementById('birthdate').value) {
         generateLifeCalendar();
     }
+    setCookie('lang', lang, 365);
 }
 
 function applyTheme(theme) {
@@ -26,9 +27,8 @@ function applyTheme(theme) {
         root.style.setProperty('--button-background-color', '#0088cc');
         root.style.setProperty('--button-text-color', '#ffffff');
         root.style.setProperty('--canvas-border-color', '#444');
-        // Добавляем цвета для календаря
         root.style.setProperty('--grid-color', '#333333');
-        root.style.setProperty('--lived-weeks-color', '#1a73e8');
+        root.style.setProperty('--lived-weeks-color', '#4285f4'); // Google Blue
         root.style.setProperty('--future-weeks-color', '#2c2c2c');
     } else {
         root.style.setProperty('--background-color', '#ffffff');
@@ -38,27 +38,42 @@ function applyTheme(theme) {
         root.style.setProperty('--button-background-color', '#0088cc');
         root.style.setProperty('--button-text-color', '#ffffff');
         root.style.setProperty('--canvas-border-color', '#ccc');
-        // Добавляем цвета для календаря
         root.style.setProperty('--grid-color', '#e0e0e0');
-        root.style.setProperty('--lived-weeks-color', '#0088cc');
+        root.style.setProperty('--lived-weeks-color', '#3498db'); // Flat Blue
         root.style.setProperty('--future-weeks-color', '#f0f0f0');
     }
     
     saveSettings(document.getElementById('lang').value, theme, document.getElementById('birthdate').value);
     
-    if (document.getElementById('birthdate').value) {
-        generateLifeCalendar();
-    }
+    // Перерисовываем календарь с текущими неделями
+    createLifeGrid(calculateLivedWeeks());
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    flatpickr("#birthdate", {
-        dateFormat: "Y-m-d",
-        maxDate: "today",
-        locale: document.documentElement.lang === 'ru' ? 'ru' : 'en'
-    });
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     
-    // Восстанавливаем настройки из куки
+    if (isMobile) {
+        flatpickr("#birthdate", {
+            dateFormat: "d.m.Y",
+            maxDate: "today",
+            locale: document.documentElement.lang === 'ru' ? 'ru' : 'en'
+        });
+    } else {
+        const birthdateInput = document.getElementById('birthdate');
+        birthdateInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 2) value = value.slice(0, 2) + '.' + value.slice(2);
+            if (value.length > 5) value = value.slice(0, 5) + '.' + value.slice(5, 9);
+            e.target.value = value;
+        });
+    }
+
+    document.querySelector('form').addEventListener('submit', function(e) {
+        e.preventDefault(); // Предотвращаем отправку формы
+        generateLifeCalendar();
+    });
+
+    // Восстанавливаем настройки из куки или берем из браузера/Telegram
     const savedLang = getCookie('lang') || 
                      window.Telegram.WebApp.initDataUnsafe?.user?.language_code || 
                      (navigator.language.startsWith('ru') ? 'ru' : 'en');
@@ -69,6 +84,14 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const savedBirthdate = getCookie('birthdate');
     
+    const birthdateInput = document.getElementById('birthdate');
+    birthdateInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            generateLifeCalendar();
+        }
+    });
+
     // Применяем сохраненные настройки
     document.getElementById('lang').value = savedLang;
     document.getElementById('theme').value = savedTheme;
@@ -83,10 +106,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Генерируем календарь, если есть дата
     if (savedBirthdate) {
         generateLifeCalendar();
+    } else {
+        createLifeGrid(); // Всегда отображаем календарь
     }
 });
 
-function createLifeGrid(livedWeeks, totalYears = 90) {
+function createLifeGrid(livedWeeks = 0, totalYears = 91) {
     const weeksPerYear = 52;
     const canvas = document.getElementById('lifeCanvas');
     if (!canvas) return;
@@ -139,7 +164,7 @@ function createLifeGrid(livedWeeks, totalYears = 90) {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     // Настройка текста
-    ctx.font = `${fontSize}px Arial`;
+    ctx.font = `${fontSize}px Roboto`;
     ctx.fillStyle = colors.text;
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'center';
@@ -153,10 +178,10 @@ function createLifeGrid(livedWeeks, totalYears = 90) {
     
     // Обновляем позиции заголовков
     ctx.textAlign = 'left';
-    ctx.fillText(labels[lang].weeks, padding, padding - 40);
+    ctx.fillText(labels[lang].weeks, padding, padding - 45);
     
     ctx.save();
-    ctx.translate(padding - 40, padding + 20);
+    ctx.translate(padding - 45, padding + 20);
     ctx.rotate(-Math.PI / 2); // Поворачиваем текст на 90 градусов
     ctx.textAlign = 'center';
     ctx.fillText(labels[lang].age, 0, 0);
@@ -207,7 +232,6 @@ function createLifeGrid(livedWeeks, totalYears = 90) {
     }
 }
 
-// Обновляем generateLifeCalendar для работы с куками
 function generateLifeCalendar() {
     const birthdate = document.getElementById('birthdate').value;
     if (!birthdate) {
@@ -219,7 +243,7 @@ function generateLifeCalendar() {
     
     try {
         const formattedBirthdate = formatDate(birthdate);
-        setCookie('birthdate', birthdate, 365);
+        setCookie('birthdate', birthdate, 365); // Сохраняем дату в формате dd.mm.yyyy
         
         const birthDate = new Date(formattedBirthdate);
         const currentDate = new Date();
@@ -254,6 +278,7 @@ function getCookie(name) {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
     if (parts.length === 2) return parts.pop().split(';').shift();
+    return '';
 }
 
 function saveSettings(lang, theme, birthdate) {
@@ -265,13 +290,25 @@ function saveSettings(lang, theme, birthdate) {
 }
 
 function formatDate(date) {
-    const d = new Date(date);
-    let month = '' + (d.getMonth() + 1);
-    let day = '' + d.getDate();
-    const year = d.getFullYear();
+    const parts = date.split('.');
+    if (parts.length === 3) {
+        return `${parts[2]}-${parts[1]}-${parts[0]}`; // Преобразуем в формат yyyy-mm-dd для Date объекта
+    }
+    return date;
+}
 
-    if (month.length < 2) month = '0' + month;
-    if (day.length < 2) day = '0' + day;
-
-    return [year, month, day].join('-');
+function calculateLivedWeeks() {
+    const birthdate = document.getElementById('birthdate').value;
+    if (!birthdate) return 0;
+    
+    try {
+        const formattedBirthdate = formatDate(birthdate);
+        const birthDate = new Date(formattedBirthdate);
+        const currentDate = new Date();
+        const livedDays = Math.floor((currentDate - birthDate) / (1000 * 60 * 60 * 24));
+        return Math.floor(livedDays / 7);
+    } catch (error) {
+        console.error('Error calculating lived weeks:', error);
+        return 0;
+    }
 }

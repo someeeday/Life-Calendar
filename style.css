@@ -9,17 +9,33 @@
     --button-text-color: #ffffff;       /* Цвет текста кнопок */
     --canvas-border-color: #ccc;        /* Цвет рамок canvas */
     --sidebar-width: 300px;            /* Ширина боковой панели */
+    --font-family: 'Roboto', sans-serif; /* Основной шрифт */
 }
+
+/* Подключение шрифта Roboto */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 
 /* 2. Основные стили страницы */
 body {
-    font-family: var(--tg-font, 'Arial', sans-serif); /* Шрифт по умолчанию */
+    font-family: var(--font-family); /* Шрифт по умолчанию */
     margin: 0;                          /* Убираем отступы */
     padding: 20px;                      /* Внутренний отступ страницы */
     min-height: 100vh;                  /* Минимальная высота - весь экран */
     background-color: var(--background-color);
     color: var(--text-color);
     overflow-x: hidden;                 /* Скрыть горизонтальную прокрутку */
+}
+
+/* Стили для заголовка */
+header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+header h1 {
+    font-size: 2em;
+    font-weight: 700;
+    margin: 0;
 }
 
 /* 3. Основной контейнер - разделение на две колонки */
@@ -35,11 +51,11 @@ body {
 /* 4. Стили панели настроек (левая колонка) */
 .calendar-settings {
     background-color: var(--container-background-color);
-    max-width: var(--sidebar-width);    /* Максимальная ширина */
+    width: 250px;;    /* Максимальная ширина */
     padding: 15px;                      /* Внутренние отступы */
     border-radius: 10px;                /* Скругление углов */
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Тень */
-    height: fit-content;                /* Высота по содержимому */
+    height: 290px;                /* Высота по содержимому */
     min-width: 200px;                   /* Минимальная ширина */
     flex-shrink: 0;                     /* Запрет на сжатие */
 }
@@ -69,12 +85,40 @@ body {
 }
 
 .form-control {
-    width: 100%;                       /* На всю ширину контейнера */
-    padding: 8px;
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
     border: 1px solid var(--canvas-border-color);
-    border-radius: 5px;
+    border-radius: 8px;
     background-color: var(--background-color);
     color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.form-control:hover {
+    border-color: var(--button-background-color);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--button-background-color);
+    box-shadow: 0 0 0 2px rgba(0, 136, 204, 0.2);
+}
+
+/* Стрелка для селекта */
+.form-control {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8.825L1.175 4 2.237 2.938 6 6.7l3.763-3.762L10.825 4z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+}
+
+/* Темная тема для селекторов */
+[data-theme="dark"] .form-control {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23fff' d='M6 8.825L1.175 4 2.237 2.938 6 6.7l3.763-3.762L10.825 4z'/%3E%3C/svg%3E");
 }
 
 /* 7. Стили кнопок */
@@ -144,4 +188,5 @@ canvas {
     color: var(--text-color);
     box-sizing: border-box; /* Учитываем padding и border в ширину */
     width: 100%;
-}
+}   
+
