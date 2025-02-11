@@ -61,6 +61,14 @@ document.addEventListener('DOMContentLoaded', async function() {
     const tg = window.Telegram?.WebApp;
     const isTelegram = tg && tg.platform !== "unknown";
     
+
+    if (isMobile) {
+        document.body.classList.add('is-mobile');
+    }
+    if (isTelegram) {
+        document.body.classList.add('is-telegram');
+    }
+    
     // Отладочная информация
     const debugInfo = {
         userAgent: navigator.userAgent,
@@ -71,12 +79,20 @@ document.addEventListener('DOMContentLoaded', async function() {
         isTelegram: window.Telegram?.WebApp ? true : false
     };
     console.log('Debug Info:', debugInfo);
-    
+
     // Инициализация Telegram если открыто в нём
     if (isTelegram) {
         tg.ready();
         tg.expand();
         
+        // Настраиваем MainButton для Telegram
+        tg.MainButton.setParams({
+            text: document.documentElement.lang === 'ru' ? 'Создать' : 'Create',
+            is_visible: true,
+            color: '#0088cc'
+        });
+        tg.MainButton.onClick(generateLifeCalendar);
+
         try {
             // Загружаем настройки из CloudStorage
             const cloudSettings = await tg.CloudStorage.getItems(['settings']);
