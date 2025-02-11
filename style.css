@@ -200,18 +200,66 @@ canvas {
 @media (max-width: 1024px) {
     .container {
         flex-direction: column;
-        align-items: center; /* Центрируем содержимое */
+        align-items: center;
         gap: var(--spacing-md);
     }
     
     .settings {
         width: 100%;
-        max-width: 600px; /* Ограничиваем максимальную ширину на мобильных */
+        max-width: 400px;
+        padding: var(--spacing-md);
     }
     
+    .settings__form {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+
+    .form-group {
+        margin-bottom: var(--spacing-sm);
+    }
+    
+    .form-label {
+        margin-bottom: 8px;
+        font-size: 16px;
+        opacity: 0.9;
+    }
+
+    /* Стилизация селектов */
+    .form-select {
+        height: 48px;
+        font-size: 16px;
+        text-align: center;
+        padding: 0 32px;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Стилизация поля даты */
+    .form-input {
+        height: 48px;
+        font-size: 18px;
+        text-align: center;
+        letter-spacing: 0.5px;
+    }
+
+    /* Кнопка в стиле Telegram */
+    .button {
+        height: 48px;
+        font-size: 16px;
+        font-weight: 500;
+        border-radius: 10px;
+        margin-top: var(--spacing-md);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Календарь */
     .calendar {
         width: 100%;
-        max-width: 100%;
+        padding: var(--spacing-md);
+        margin-top: var(--spacing-sm);
     }
 }
 
@@ -219,17 +267,24 @@ canvas {
     body {
         padding: var(--spacing-sm);
     }
-    
-    .header {
-        margin-bottom: var(--spacing-md);
-    }
-    
-    .settings,
-    .calendar {
+
+    .settings {
         padding: var(--spacing-md);
-        border-radius: var(--radius-sm);
     }
-    .footer {
-        margin-top: var(--spacing-md);
+
+    .form-select,
+    .form-input {
+        font-size: 16px;
     }
+
+    .calendar {
+        padding: var(--spacing-sm);
+    }
+}
+
+/* Темная тема для мобильных */
+[data-theme="dark"] .form-select,
+[data-theme="dark"] .form-input {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
 }

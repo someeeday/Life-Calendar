@@ -1,4 +1,5 @@
 function changeLanguage(lang) {
+    // Обновляем переводы на странице
     document.querySelectorAll('[data-text-' + lang + ']').forEach(element => {
         const translation = element.getAttribute('data-text-' + lang);
         if (translation && element.id !== 'lang') {
@@ -6,13 +7,19 @@ function changeLanguage(lang) {
         }
     });
     
+    // Устанавливаем язык документа
     document.documentElement.lang = lang;
-    saveSettings(lang, document.getElementById('theme').value, document.getElementById('birthdate').value);
     
-    if (document.getElementById('birthdate').value) {
-        generateLifeCalendar();
-    }
+    // Сохраняем настройки без перерисовки календаря
+    const currentTheme = document.getElementById('theme').value;
+    const currentBirthdate = document.getElementById('birthdate').value;
+    saveSettings(lang, currentTheme, currentBirthdate);
     setCookie('lang', lang, 365);
+    
+    // Перерисовываем календарь только если он уже был создан
+    if (currentBirthdate && document.querySelector('.calendar canvas').getContext('2d')) {
+        createLifeGrid(calculateLivedWeeks());
+    }
 }
 
 function applyTheme(theme) {
