@@ -49,10 +49,55 @@ function applyTheme(theme) {
     createLifeGrid(calculateLivedWeeks());
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const tg = window.Telegram?.WebApp;
+    const isTelegram = tg && tg.platform !== "unknown";
     
-    if (isMobile) {
+    // Инициализация Telegram если открыто в нём
+    if (isTelegram) {
+        tg.ready();
+        tg.expand();
+        
+        try {
+            // Загружаем настройки из CloudStorage
+            const cloudSettings = await tg.CloudStorage.getItems(['settings']);
+            if (cloudSettings.settings) {
+                const settings = JSON.parse(cloudSettings.settings);
+                
+                // Применяем настройки из CloudStorage если нет в куках
+                if (settings.lang && !getCookie('lang')) {
+                    document.getElementById('lang').value = settings.lang;
+                    changeLanguage(settings.lang);
+                }
+                if (settings.theme && !getCookie('theme')) {
+                    document.getElementById('theme').value = settings.theme;
+                    applyTheme(settings.theme);
+                }
+                if (settings.birthdate && !getCookie('birthdate')) {
+                    document.getElementById('birthdate').value = settings.birthdate;
+                    generateLifeCalendar();
+                }
+            }
+            
+            // Запрашиваем данные пользователя
+            try {
+                const userDataResult = await tg.requestUser();
+                if (userDataResult && !getCookie('lang')) {
+                    const userLang = userDataResult.language_code?.startsWith('ru') ? 'ru' : 'en';
+                    document.getElementById('lang').value = userLang;
+                    changeLanguage(userLang);
+                }
+            } catch (error) {
+                console.log('User data access denied or error');
+            }
+        } catch (error) {
+            console.log('Error loading Telegram settings');
+        }
+    }
+
+    // Инициализация выбора даты
+    if (isMobile || isTelegram) {
         flatpickr("#birthdate", {
             dateFormat: "d.m.Y",
             maxDate: "today",
@@ -68,47 +113,59 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    document.querySelector('form').addEventListener('submit', function(e) {
-        e.preventDefault(); // Предотвращаем отправку формы
-        generateLifeCalendar();
-    });
-
-    // Восстанавливаем настройки из куки или берем из браузера/Telegram
+    // Восстанавливаем настройки из всех источников с приоритетами
     const savedLang = getCookie('lang') || 
-                     window.Telegram.WebApp.initDataUnsafe?.user?.language_code || 
+                     localStorage.getItem('lang') ||
+                     (isTelegram ? tg.initDataUnsafe?.user?.language_code : null) ||
                      (navigator.language.startsWith('ru') ? 'ru' : 'en');
     
     const savedTheme = getCookie('theme') || 
-                      window.Telegram.WebApp.colorScheme || 
+                      localStorage.getItem('theme') ||
+                      (isTelegram ? tg.colorScheme : null) ||
                       (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     
-    const savedBirthdate = getCookie('birthdate');
-    
-    const birthdateInput = document.getElementById('birthdate');
-    birthdateInput.addEventListener('keypress', function(e) {
+    const savedBirthdate = getCookie('birthdate') || 
+                          localStorage.getItem('birthdate');
+
+    // Применяем сохраненные настройки
+    if (savedLang) {
+        document.getElementById('lang').value = savedLang;
+        changeLanguage(savedLang);
+    }
+
+    if (savedTheme) {
+        document.getElementById('theme').value = savedTheme;
+        applyTheme(savedTheme);
+    }
+
+    if (savedBirthdate) {
+        document.getElementById('birthdate').value = savedBirthdate;
+        generateLifeCalendar();
+    } else {
+        createLifeGrid(); // Показываем пустой календарь по умолчанию
+    }
+
+    // Добавляем слушатели событий
+    document.querySelector('form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        generateLifeCalendar();
+    });
+
+    document.getElementById('birthdate').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             e.preventDefault();
             generateLifeCalendar();
         }
     });
 
-    // Применяем сохраненные настройки
-    document.getElementById('lang').value = savedLang;
-    document.getElementById('theme').value = savedTheme;
-    if (savedBirthdate) {
-        document.getElementById('birthdate').value = savedBirthdate;
-    }
-    
-    // Применяем язык и тему
-    changeLanguage(savedLang);
-    applyTheme(savedTheme);
-    
-    // Генерируем календарь, если есть дата
-    if (savedBirthdate) {
-        generateLifeCalendar();
-    } else {
-        createLifeGrid(); // Всегда отображаем календарь
-    }
+    // Слушатель изменения размера окна
+    window.addEventListener('resize', function() {
+        if (document.getElementById('birthdate').value) {
+            generateLifeCalendar();
+        } else {
+            createLifeGrid();
+        }
+    });
 });
 
 function createLifeGrid(livedWeeks = 0, totalYears = 91) {
@@ -237,31 +294,50 @@ function createLifeGrid(livedWeeks = 0, totalYears = 91) {
 
 function generateLifeCalendar() {
     const birthdate = document.getElementById('birthdate').value;
-    if (!birthdate) {
+    
+    if (!birthdate || !isValidDate(birthdate)) {
         alert(document.documentElement.lang === 'ru' ? 
-            'Пожалуйста, введите вашу дату рождения.' : 
-            'Please enter your birth date.');
+            'Пожалуйста, введите корректную дату рождения в формате DD.MM.YYYY' : 
+            'Please enter a valid birth date in DD.MM.YYYY format');
         return;
     }
     
     try {
         const formattedBirthdate = formatDate(birthdate);
-        setCookie('birthdate', birthdate, 365); // Сохраняем дату в формате dd.mm.yyyy
+        if (!formattedBirthdate) {
+            throw new Error('Invalid date format');
+        }
         
         const birthDate = new Date(formattedBirthdate);
         const currentDate = new Date();
         
-        if (birthDate > currentDate) {
-            alert(document.documentElement.lang === 'ru' ? 
-                'Дата рождения не может быть в будущем.' : 
-                'Birth date cannot be in the future.');
-            return;
+        // Вычисляем возраст
+        const ageInMilliseconds = currentDate - birthDate;
+        const ageInYears = ageInMilliseconds / (1000 * 60 * 60 * 24 * 365.25);
+        
+        if (ageInYears > 90) {
+            const confirmMessage = document.documentElement.lang === 'ru' ? 
+                'Возраст превышает 90 лет. Отобразить полностью заполненный календарь?' : 
+                'Age exceeds 90 years. Show fully filled calendar?';
+            
+            if (!confirm(confirmMessage)) {
+                return;
+            }
         }
         
-        const livedDays = Math.floor((currentDate - birthDate) / (1000 * 60 * 60 * 24));
-        const livedWeeks = Math.floor(livedDays / 7);
+        const livedWeeks = Math.floor(ageInMilliseconds / (1000 * 60 * 60 * 24 * 7));
         
-        createLifeGrid(livedWeeks);
+        // Сохраняем валидную дату
+        setCookie('birthdate', birthdate, 365);
+        saveSettings(
+            document.getElementById('lang').value,
+            document.getElementById('theme').value,
+            birthdate
+        );
+        
+        // Ограничиваем максимальное количество недель
+        createLifeGrid(Math.min(livedWeeks, 91 * 52));
+        
     } catch (error) {
         console.error('Error generating calendar:', error);
         alert(document.documentElement.lang === 'ru' ? 
@@ -269,6 +345,7 @@ function generateLifeCalendar() {
             'Error creating calendar.');
     }
 }
+
 
 // Функции для работы с куками
 function setCookie(name, value, days) {
@@ -293,25 +370,90 @@ function saveSettings(lang, theme, birthdate) {
 }
 
 function formatDate(date) {
+    if (!date || !isValidDate(date)) return '';
+    
     const parts = date.split('.');
-    if (parts.length === 3) {
-        return `${parts[2]}-${parts[1]}-${parts[0]}`; // Преобразуем в формат yyyy-mm-dd для Date объекта
-    }
-    return date;
+    return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
 }
 
 function calculateLivedWeeks() {
     const birthdate = document.getElementById('birthdate').value;
-    if (!birthdate) return 0;
+    if (!birthdate || !isValidDate(birthdate)) return 0;
     
     try {
         const formattedBirthdate = formatDate(birthdate);
         const birthDate = new Date(formattedBirthdate);
         const currentDate = new Date();
-        const livedDays = Math.floor((currentDate - birthDate) / (1000 * 60 * 60 * 24));
-        return Math.floor(livedDays / 7);
+        return Math.floor((currentDate - birthDate) / (1000 * 60 * 60 * 24 * 7));
     } catch (error) {
         console.error('Error calculating lived weeks:', error);
         return 0;
     }
 }
+
+function isValidDate(dateString) {
+    if (!dateString) return false;
+    
+    const parts = dateString.split('.');
+    if (parts.length !== 3) return false;
+    
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    const year = parseInt(parts[2], 10);
+    
+    // Проверка на числа
+    if (isNaN(day) || isNaN(month) || isNaN(year)) return false;
+    
+    // Проверка года
+    const currentYear = new Date().getFullYear();
+    if (year < 1900 || year > currentYear) return false;
+    
+    // Проверка месяца
+    if (month < 1 || month > 12) return false;
+    
+    // Проверка дня с учетом високосного года
+    const daysInMonth = new Date(year, month, 0).getDate();
+    if (day < 1 || day > daysInMonth) return false;
+    
+    // Проверка что дата не в будущем
+    const inputDate = new Date(year, month - 1, day);
+    if (inputDate > new Date()) return false;
+    
+    return true;
+}
+
+function initializeDateInput() {
+    const birthdateInput = document.getElementById('birthdate');
+    
+    birthdateInput.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        
+        if (value.length > 8) value = value.slice(0, 8);
+        
+        if (value.length > 4) {
+            value = value.slice(0, 2) + '.' + value.slice(2, 4) + '.' + value.slice(4);
+        } else if (value.length > 2) {
+            value = value.slice(0, 2) + '.' + value.slice(2);
+        }
+        
+        e.target.value = value;
+        
+        // Автоматическая валидация при вводе
+        if (value.length === 10) {
+            if (!isValidDate(value)) {
+                e.target.classList.add('error');
+            } else {
+                e.target.classList.remove('error');
+            }
+        }
+    });
+}
+
+const style = document.createElement('style');
+style.textContent = `
+    .form-input.error {
+        border-color: #ff4444;
+        background-color: rgba(255, 68, 68, 0.1);
+    }
+`;
+document.head.appendChild(style);   
