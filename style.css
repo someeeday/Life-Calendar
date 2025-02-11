@@ -1,192 +1,235 @@
-/* 1. Основные переменные цветов и размеров */
 :root {
-    /* Цвета для светлой темы */
-    --background-color: #ffffff;        /* Цвет фона страницы */
-    --text-color: #000000;             /* Цвет текста */
-    --container-background-color: #ffffff; /* Цвет фона контейнеров */
-    --container-text-color: #000000;    /* Цвет текста в контейнерах */
-    --button-background-color: #0088cc; /* Цвет фона кнопок */
-    --button-text-color: #ffffff;       /* Цвет текста кнопок */
-    --canvas-border-color: #ccc;        /* Цвет рамок canvas */
-    --sidebar-width: 300px;            /* Ширина боковой панели */
-    --font-family: 'Roboto', sans-serif; /* Основной шрифт */
+    /* Основные цвета */
+    --color-primary: #0088cc;
+    --color-surface: #ffffff;
+    --color-background: #f8f9fa;
+    --color-text: #2c3e50;
+    --color-border: #e9ecef;
+    --color-hover: #007ab8;
+    --color-focus: rgba(0, 136, 204, 0.2);
+    
+    /* Размеры и отступы */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --radius-md: 8px;
+    --header-height: 60px;
+    --settings-width: 280px;
+    
+    /* Эффекты */
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.05);
+    --transition: all 0.2s ease;
 }
 
-/* Подключение шрифта Roboto */
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
-
-/* 2. Основные стили страницы */
-body {
-    font-family: var(--font-family); /* Шрифт по умолчанию */
-    margin: 0;                          /* Убираем отступы */
-    padding: 20px;                      /* Внутренний отступ страницы */
-    min-height: 100vh;                  /* Минимальная высота - весь экран */
-    background-color: var(--background-color);
-    color: var(--text-color);
-    overflow-x: hidden;                 /* Скрыть горизонтальную прокрутку */
+/* Темная тема */
+[data-theme="dark"] {
+    --color-surface: #1a1a1a;
+    --color-background: #121212;
+    --color-text: #e9ecef;
+    --color-border: #2c2c2c;
 }
 
-/* Стили для заголовка */
-header {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-header h1 {
-    font-size: 2em;
-    font-weight: 700;
+/* Базовые стили */
+* {
     margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-/* 3. Основной контейнер - разделение на две колонки */
+body {
+    font-family: 'Roboto', system-ui, -apple-system, sans-serif;
+    background: var(--color-background);
+    color: var(--color-text);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    padding: var(--spacing-md);
+    min-height: 100vh;
+}
+
+/* Структура приложения */
+.app {
+    max-width: 1800px;
+    margin: 0 auto;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: var(--spacing-xl);
+}
+
+.header__title {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
 .container {
-    display: flex;                      /* Flexbox для разделения */
-    gap: 30px;                         /* Отступ между колонками */
-    max-width: 1800px;                 /* Максимальная ширина */
-    margin: 0 auto;                    /* Центрирование */
-    height: auto;                      /* Автоматическая высота */
-    flex-wrap: nowrap;                 /* Запрет на перенос строк */
-}
-
-/* 4. Стили панели настроек (левая колонка) */
-.calendar-settings {
-    background-color: var(--container-background-color);
-    width: 250px;;    /* Максимальная ширина */
-    padding: 15px;                      /* Внутренние отступы */
-    border-radius: 10px;                /* Скругление углов */
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Тень */
-    height: 290px;                /* Высота по содержимому */
-    min-width: 200px;                   /* Минимальная ширина */
-    flex-shrink: 0;                     /* Запрет на сжатие */
-}
-
-/* 5. Стили контейнера календаря (правая колонка) */
-.calendar-container {
-    background-color: var(--container-background-color);
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    overflow: visible;                  /* Убираем прокрутку внутри контейнера */
-    flex: 1;                           /* Растягивание на доступное пространство */
     display: flex;
-    justify-content: flex-start;
-    align-items: flex-start;
+    gap: var(--spacing-lg);
 }
 
-/* 6. Стили форм и элементов ввода */
+/* Панель настроек */
+.settings {
+    background: var(--color-surface);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    width: var(--settings-width);
+    flex-shrink: 0;
+    height: fit-content; /* Делаем высоту по содержимому */
+}
+
+.settings__form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+/* Формы */
 .form-group {
-    margin-bottom: 20px;               /* Отступ между группами формы */
+    margin-bottom: var(--spacing-md);
 }
 
-.form-group label {
-    display: block;                    /* Каждая метка с новой строки */
-    margin-bottom: 8px;
+.form-label {
+    display: block;
+    margin-bottom: var(--spacing-xs);
     font-weight: 500;
+    color: var(--color-text);
 }
 
-.form-control {
-    appearance: none;
-    -webkit-appearance: none;
+.form-select,
+.form-input {
     width: 100%;
-    padding: 10px 12px;
+    height: 40px;
+    padding: 0 var(--spacing-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-text);
     font-size: 14px;
-    border: 1px solid var(--canvas-border-color);
-    border-radius: 8px;
-    background-color: var(--background-color);
-    color: var(--text-color);
-    cursor: pointer;
-    transition: all 0.3s ease;
+    transition: var(--transition);
 }
 
-.form-control:hover {
-    border-color: var(--button-background-color);
-}
-
-.form-control:focus {
-    outline: none;
-    border-color: var(--button-background-color);
-    box-shadow: 0 0 0 2px rgba(0, 136, 204, 0.2);
-}
-
-/* Стрелка для селекта */
-.form-control {
+.form-select {
+    appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8.825L1.175 4 2.237 2.938 6 6.7l3.763-3.762L10.825 4z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 12px center;
     padding-right: 32px;
 }
 
-/* Темная тема для селекторов */
-[data-theme="dark"] .form-control {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23fff' d='M6 8.825L1.175 4 2.237 2.938 6 6.7l3.763-3.762L10.825 4z'/%3E%3C/svg%3E");
+.form-select:hover,
+.form-input:hover {
+    border-color: var(--color-primary);
 }
 
-/* 7. Стили кнопок */
-button {
-    width: 100%;                       /* На всю ширину */
-    background-color: var(--button-background-color);
-    color: var(--button-text-color);
+.form-select:focus,
+.form-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px var(--color-focus);
+}
+
+/* Кнопки */
+.button {
+    width: 100%;
+    height: 40px;
     border: none;
-    padding: 12px;
-    border-radius: 5px;
-    cursor: pointer;                   /* Курсор-указатель */
-    font-size: 16px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
 }
 
-button:hover {
-    opacity: 0.9;                      /* Эффект при наведении */
+.button--primary {
+    background: var(--color-primary);
+    color: white;
 }
 
-/* 8. Стили для canvas (календарь) */
+.button--primary:hover {
+    background: var(--color-hover);
+}
+
+/* Календарь */
+.calendar {
+    background: var(--color-surface);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    flex: 1;
+    overflow: hidden;
+}
+
 canvas {
-    max-width: none;                   /* Отменяем ограничение ширины */
-    width: 100%;                       /* Ширина на всю доступную ширину */
-    height: auto;                      /* Автоматическая высота */
-    margin: 0;                         /* Убираем отступы */
+    width: 100%;
+    height: auto;
+    display: block;
 }
 
-/* 9. Адаптивная верстка для разных экранов */
+.footer {
+    margin-top: var(--spacing-lg);
+    padding: var(--spacing-md) 0;
+    text-align: center;
+}
+
+.footer__content {
+    font-size: 14px;
+    color: var(--color-text);
+    opacity: 0.8;
+}
+
+.footer__text {
+    margin-right: var(--spacing-xs);
+}
+
+.footer__link {
+    color: var(--color-primary);
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.footer__link:hover {
+    color: var(--color-hover);
+    text-decoration: underline;
+}
+
+/* Медиа-запросы */
 @media (max-width: 1024px) {
-    /* Стили для планшетов */
     .container {
-        flex-direction: column;        /* Колонки в столбик */
-        height: auto;
+        flex-direction: column;
+        align-items: center; /* Центрируем содержимое */
+        gap: var(--spacing-md);
     }
-}
-
-@media (max-width: 768px) {
-    /* Стили для мобильных устройств */
-    body {
-        padding: 10px;
+    
+    .settings {
+        width: 100%;
+        max-width: 600px; /* Ограничиваем максимальную ширину на мобильных */
     }
-    .container {
-        flex-direction: column;        /* Колонки в столбик */
-    }
-    .calendar-settings {
-        width: auto;
-    }
-    .calendar-container {
-        min-height: 400px;
+    
+    .calendar {
+        width: 100%;
+        max-width: 100%;
     }
 }
 
 @media (max-width: 480px) {
-    /* Стили для маленьких экранов */
-    .form-group {
-        margin-bottom: 15px;
+    body {
+        padding: var(--spacing-sm);
     }
-    .calendar-container {
-        min-height: 300px;
+    
+    .header {
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .settings,
+    .calendar {
+        padding: var(--spacing-md);
+        border-radius: var(--radius-sm);
+    }
+    .footer {
+        margin-top: var(--spacing-md);
     }
 }
-
-.date-input {
-    padding: 8px;
-    border: 1px solid var(--canvas-border-color);
-    border-radius: 5px;
-    background-color: var(--background-color);
-    color: var(--text-color);
-    box-sizing: border-box; /* Учитываем padding и border в ширину */
-    width: 100%;
-}   
-

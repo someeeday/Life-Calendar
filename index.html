@@ -2,67 +2,104 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Life Calendar</title>
-    <meta name="description" content="Life Calendar">  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#1c1c1c" media="(prefers-color-scheme: dark)">
+    <meta name="description" content="Life Calendar - визуализация жизни в неделях">
     <meta name="author" content="someeeday">
-    <link rel="icon" type="image/png" href="favicon.png">
-    <link rel="stylesheet" href="style.css">
+    
+    <title>Life Calendar</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
+    
+    <!-- Styles -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header>
-        <h1>Life Calendar</h1>
-    </header>
-    <div class="container">
-        <div class="calendar-settings">
-            <form>
-                <div class="form-group">
-                    <label for="lang" id="lang_select_lang" 
-                            data-text-ru="Язык"
-                            data-text-en="Language">Язык</label>
-                    <select class="form-control" id="lang" onchange="changeLanguage(this.value)">
-                        <option value="ru">Русский</option>
-                        <option value="en">English</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="birthdate" id="lang_set_birthday" 
-                            data-text-ru="Дата рождения" 
-                            data-text-en="Birth date">
-                    </label>
-                    <input type="text" id="birthdate" name="birthdate" class="form-control date-input">
-                </div>
-                <div class="form-group">
-                    <label for="theme" id="lang_set_theme" 
-                            data-text-ru="Тема" 
-                            data-text-en="Theme">Тема</label>
-                    <select class="form-control" id="theme" onchange="applyTheme(this.value)">
-                        <option value="light" 
-                                data-text-ru="Светлая" 
-                                data-text-en="Light">Светлая</option>
-                        <option value="dark" 
-                                data-text-ru="Тёмная" 
-                                data-text-en="Dark">Тёмная</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <button type="button" class="btn btn-default" 
-                            onclick="generateLifeCalendar()" 
-                            id="create_calendar_btn"
-                            data-text-ru="Создать календарь" 
-                            data-text-en="Create calendar">
-                        Создать календарь
-                    </button>
-                </div>
-            </form>
-        </div>
-        <div class="calendar-container">
-            <canvas id="lifeCanvas"></canvas>
-        </div>
+    <div class="app">
+        <header class="header">
+            <h1 class="header__title">Life Calendar</h1>
+        </header>
+
+        <main class="main">
+            <div class="container">
+                <aside class="settings">
+                    <form class="settings__form" autocomplete="off" novalidate>
+                        <div class="form-group">
+                            <label for="lang" class="form-label" id="lang_select_lang" 
+                                   data-text-ru="Язык"
+                                   data-text-en="Language">
+                                Язык
+                            </label>
+                            <select class="form-select" id="lang" name="lang" onchange="changeLanguage(this.value)">
+                                <option value="ru">Русский</option>
+                                <option value="en">English</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="birthdate" class="form-label" id="lang_set_birthday" 
+                                   data-text-ru="Дата рождения" 
+                                   data-text-en="Birth date">
+                                Дата рождения
+                            </label>
+                            <input type="text" 
+                                   id="birthdate" 
+                                   name="birthdate" 
+                                   class="form-input"
+                                   placeholder="DD.MM.YYYY"
+                                   inputmode="numeric"
+                                   pattern="\d{2}\.\d{2}\.\d{4}">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="theme" class="form-label" id="lang_set_theme" 
+                                   data-text-ru="Тема" 
+                                   data-text-en="Theme">
+                                Тема
+                            </label>
+                            <select class="form-select" id="theme" name="theme" onchange="applyTheme(this.value)">
+                                <option value="light" data-text-ru="Светлая" data-text-en="Light">Светлая</option>
+                                <option value="dark" data-text-ru="Тёмная" data-text-en="Dark">Тёмная</option>
+                            </select>
+                        </div>
+
+                        <button type="button" 
+                                class="button button--primary" 
+                                onclick="generateLifeCalendar()" 
+                                id="create_calendar_btn"
+                                data-text-ru="Создать календарь" 
+                                data-text-en="Create calendar">
+                            Создать календарь
+                        </button>
+                    </form>
+                </aside>
+
+                <section class="calendar">
+                    <canvas id="lifeCanvas" aria-label="Life Calendar visualization"></canvas>
+                </section>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <div class="footer__content">
+                <span class="footer__text">Created by</span>
+                <a href="https://t.me/someeeday"    
+                   class="footer__link" 
+                   target="_blank" 
+                   rel="noopener noreferrer">@someeeday</a>
+            </div>
+        </footer>
     </div>
-    <script src="script.js"></script>
-</body> 
+
+    <!-- Скрипты -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr" defer></script>
+    <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
+    <script src="script.js" defer></script>
+</body>
 </html>

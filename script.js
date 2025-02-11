@@ -121,7 +121,7 @@ function createLifeGrid(livedWeeks = 0, totalYears = 91) {
     // Увеличенные размеры для лучшей читаемости
     const cellSize = 15;
     const padding = 80;
-    const fontSize = 13;
+    const fontSize = 12;
     const cellGap = 2;
 
     // Настраиваем размеры canvas с учетом контейнера
@@ -180,10 +180,13 @@ function createLifeGrid(livedWeeks = 0, totalYears = 91) {
     ctx.textAlign = 'left';
     ctx.fillText(labels[lang].weeks, padding, padding - 45);
     
+    // Фиксированное позиционирование для текста возраста
+    const ageTextPosition = 0; // Можно настроить это значение
+
     ctx.save();
-    ctx.translate(padding - 45, padding + 20);
-    ctx.rotate(-Math.PI / 2); // Поворачиваем текст на 90 градусов
-    ctx.textAlign = 'center';
+    ctx.translate(padding - 45, padding + ageTextPosition);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'right';
     ctx.fillText(labels[lang].age, 0, 0);
     ctx.restore();
 
@@ -226,7 +229,7 @@ function createLifeGrid(livedWeeks = 0, totalYears = 91) {
         // Рисуем ячейку с закругленными углами
         ctx.fillStyle = week < livedWeeks ? colors.lived : colors.future;
         ctx.beginPath();
-        ctx.roundRect(x, y, cellSize, cellSize, cellSize * 0.2);
+        ctx.roundRect(x, y, cellSize, cellSize, cellSize * 0.15);
         ctx.fill();
         ctx.stroke();
     }
