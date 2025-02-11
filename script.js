@@ -546,7 +546,12 @@ function initializeDatePicker() {
             minDate: "1900-01-01",
             disableMobile: false,
             allowInput: false,
-            locale: flatpickr.l10ns[document.documentElement.lang === 'ru' ? 'ru' : 'en'],
+            locale: {
+                ...flatpickr.l10ns[document.documentElement.lang === 'ru' ? 'ru' : 'en'],
+                firstDayOfWeek: 1,
+                // Измененный формат для placeholder в зависимости от языка
+                placeholder: document.documentElement.lang === 'ru' ? 'ДД.ММ.ГГГГ' : 'DD.MM.YYYY'
+            },
             onChange: function(selectedDates) {
                 if (selectedDates[0]) {
                     const date = selectedDates[0];

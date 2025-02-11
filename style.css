@@ -1,5 +1,7 @@
 :root {
     --transition-theme: background-color 0.3s ease, color 0.3s ease;
+    --icon-color: #2c3e50;
+
     /* Основные цвета */
     --color-primary: #0088cc;
     --color-surface: #ffffff;
@@ -70,6 +72,7 @@ body {
 .container {
     display: flex;
     gap: var(--spacing-lg);
+    min-height: calc(100vh - var(--header-height) - var(--spacing-md) * 4); /* Учитываем отступы */
 }
 
 /* Панель настроек */
@@ -80,6 +83,10 @@ body {
     box-shadow: var(--shadow-md);
     width: var(--settings-width);
     flex-shrink: 0;
+    height: max-content; /* Изменяем на max-content */
+    align-self: flex-start;
+    position: sticky;
+    top: var(--spacing-md);
 }
 
 /* Форма настроек */
@@ -210,10 +217,14 @@ canvas {
     .container {
         flex-direction: column;
         gap: 0;
+        min-height: auto; /* Сбрасываем минимальную высоту на мобильных */
     }
 
     .settings {
+        position: relative;
+        top: 0;
         width: 100%;
+        height: auto;
         padding: var(--spacing-md);
         margin-bottom: var(--spacing-md);
     }
@@ -227,6 +238,19 @@ canvas {
         height: 44px;
         font-size: 16px;
     }
+
+    .form-input[type="text"][readonly] {
+        background-repeat: no-repeat !important;
+        background-position: right 8px center !important;
+        padding-right: 32px !important;
+        /* Меняем цвет иконки на более темный */
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24'%3E%3Cpath fill='%23333333' d='M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z'/%3E%3C/svg%3E") !important;
+    }
+
+    /* Иконка календаря для темной темы остается белой */
+    [data-theme="dark"] .form-input[type="text"][readonly] {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24'%3E%3Cpath fill='%23ffffff' d='M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z'/%3E%3C/svg%3E") !important;
+    } 
 }
 
 /* Темная тема для мобильных */
@@ -260,12 +284,11 @@ canvas {
     background: var(--tg-theme-bg-color, var(--color-background));
 }
 
-/* Стили для мобильного календаря flatpickr */
 .flatpickr-calendar {
     background: var(--color-surface) !important;
     color: var(--color-text) !important;
     border-color: var(--color-border) !important;
-    font-size: 16px !important;  /* Увеличиваем размер для лучшей читаемости */
+    font-size: 16px !important;
 }
 
 .flatpickr-current-month {
@@ -296,4 +319,9 @@ canvas {
     background: var(--color-hover) !important;
     border-color: var(--color-hover) !important;
     color: white !important;
+}
+
+[data-theme="dark"] {
+    /* ...existing code... */
+    --icon-color: #ffffff;
 }
