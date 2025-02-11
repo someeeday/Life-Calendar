@@ -207,50 +207,57 @@ canvas {
     .settings {
         width: 100%;
         max-width: 400px;
-        padding: var(--spacing-md);
+        padding: var(--spacing-lg);
+        margin-bottom: var(--spacing-md);
+        border-radius: 12px;
+        background: var(--color-surface);
     }
-    
+
     .settings__form {
-        display: flex;
-        flex-direction: column;
-        gap: var(--spacing-md);
+        display: grid;
+        grid-template-columns: repeat(2, 1fr); /* Два элемента в строке */
+        gap: 12px;
+    }
+
+    /* Поле даты на всю ширину */
+    .settings__form > div:nth-child(2) {
+        grid-column: 1 / -1;
     }
 
     .form-group {
-        margin-bottom: var(--spacing-sm);
+        margin: 0;
     }
-    
+
     .form-label {
-        margin-bottom: 8px;
-        font-size: 16px;
-        opacity: 0.9;
+        font-size: 13px;
+        margin-bottom: 6px;
+        opacity: 0.85;
     }
 
-    /* Стилизация селектов */
-    .form-select {
-        height: 48px;
-        font-size: 16px;
-        text-align: center;
-        padding: 0 32px;
-        cursor: pointer;
-        -webkit-tap-highlight-color: transparent;
-    }
-
-    /* Стилизация поля даты */
+    .form-select,
     .form-input {
-        height: 48px;
-        font-size: 18px;
+        height: 42px;
+        font-size: 15px;
+        padding: 0 12px;
         text-align: center;
+        border-radius: 8px;
+    }
+
+    /* Поле даты больше остальных */
+    .form-input {
+        height: 46px;
+        font-size: 16px;
         letter-spacing: 0.5px;
     }
 
-    /* Кнопка в стиле Telegram */
+    /* Кнопка внизу на всю ширину */
     .button {
-        height: 48px;
-        font-size: 16px;
-        font-weight: 500;
+        grid-column: 1 / -1;
+        height: 46px;
+        font-size: 15px;
+        font-weight: 600;
         border-radius: 10px;
-        margin-top: var(--spacing-md);
+        margin-top: 4px;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
@@ -259,9 +266,10 @@ canvas {
     .calendar {
         width: 100%;
         padding: var(--spacing-md);
-        margin-top: var(--spacing-sm);
+        border-radius: 12px;
     }
 }
+
 
 @media (max-width: 480px) {
     body {
@@ -279,6 +287,18 @@ canvas {
 
     .calendar {
         padding: var(--spacing-sm);
+    }
+}
+
+@media (max-width: 360px) {
+    .settings__form {
+        grid-template-columns: 1fr; /* Один элемент в строке */
+    }
+
+    .form-select,
+    .form-input,
+    .button {
+        height: 44px;
     }
 }
 
