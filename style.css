@@ -301,7 +301,6 @@ canvas {
         height: 44px;
     }
 }
-
 /* Темная тема для мобильных */
 [data-theme="dark"] .form-select,
 [data-theme="dark"] .form-input {
