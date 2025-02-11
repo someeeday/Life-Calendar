@@ -2,21 +2,54 @@ function changeLanguage(lang) {
     // Обновляем переводы на странице
     document.querySelectorAll('[data-text-' + lang + ']').forEach(element => {
         const translation = element.getAttribute('data-text-' + lang);
-        if (translation && element.id !== 'lang') {
+        if (translation && element.id !== 'lang-select') {
             element.textContent = translation;
         }
     });
     
+    // Обновляем placeholder для даты в зависимости от языка
+    const birthdateInput = document.getElementById('birthdate-input');
+    if (birthdateInput) {
+        birthdateInput.placeholder = lang === 'ru' ? 'ДД.ММ.ГГГГ' : 'DD.MM.YYYY';
+        
+        // Обновляем flatpickr если он инициализирован
+        if (birthdateInput._flatpickr) {
+            birthdateInput._flatpickr.set('locale', {
+                ...flatpickr.l10ns[lang === 'ru' ? 'ru' : 'en'],
+                firstDayOfWeek: 1,
+                formatDate: (date) => {
+                    const d = date.getDate().toString().padStart(2, '0');
+                    const m = (date.getMonth() + 1).toString().padStart(2, '0');
+                    const y = date.getFullYear();
+                    return `${d}.${m}.${y}`;
+                }
+            });
+            
+            // Принудительно обновляем отображение даты
+            if (birthdateInput.value) {
+                const currentDate = birthdateInput._flatpickr.selectedDates[0];
+                if (currentDate) {
+                    const d = currentDate.getDate().toString().padStart(2, '0');
+                    const m = (currentDate.getMonth() + 1).toString().padStart(2, '0');
+                    const y = currentDate.getFullYear();
+                    birthdateInput.value = `${d}.${m}.${y}`;
+                }
+            }
+        }
+    }
+    
     // Устанавливаем язык документа
     document.documentElement.lang = lang;
     
-    // Сохраняем настройки без перерисовки календаря
+    // Сохраняем настройки
     const currentTheme = document.getElementById('theme-select').value;
     const currentBirthdate = document.getElementById('birthdate-input').value;
     saveSettings(lang, currentTheme, currentBirthdate);
-    setCookie('lang', lang, 365);
     
-    // Перерисовываем календарь только если он уже был создан
+    // Генерируем событие смены языка
+    document.dispatchEvent(new Event('languageChanged'));
+    
+    // Перерисовываем календарь если он уже был создан
     if (currentBirthdate && document.querySelector('.calendar canvas').getContext('2d')) {
         createLifeGrid(calculateLivedWeeks());
     }
@@ -40,7 +73,7 @@ function applyTheme(theme) {
             root.style.setProperty('--button-text-color', '#ffffff');
             root.style.setProperty('--canvas-border-color', '#444');
             root.style.setProperty('--grid-color', '#333333');
-            root.style.setProperty('--lived-weeks-color', '#4285f4'); // Google Blue
+            root.style.setProperty('--lived-weeks-color', '#4285f4');
             root.style.setProperty('--future-weeks-color', '#2c2c2c');
         } else {
             root.style.setProperty('--background-color', '#ffffff');
@@ -51,56 +84,77 @@ function applyTheme(theme) {
             root.style.setProperty('--button-text-color', '#ffffff');
             root.style.setProperty('--canvas-border-color', '#ccc');
             root.style.setProperty('--grid-color', '#e0e0e0');
-            root.style.setProperty('--lived-weeks-color', '#3498db'); // Flat Blue
+            root.style.setProperty('--lived-weeks-color', '#3498db');
             root.style.setProperty('--future-weeks-color', '#f0f0f0');
         }
     }
-    saveSettings(document.getElementById('lang-select').value, theme, document.getElementById('birthdate-input').value);
     
-    // Перерисовываем календарь с текущими неделями
+    // Сохраняем настройки
+    saveSettings(
+        document.getElementById('lang-select').value,
+        theme,
+        document.getElementById('birthdate-input').value
+    );
+
+    // Перерисовываем календарь
     createLifeGrid(calculateLivedWeeks());
 }
 
 document.addEventListener('DOMContentLoaded', async function() {
+    initializeDatePicker();
     const tg = window.Telegram?.WebApp;
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    const isTelegram = tg && tg.platform !== "unknown";
     
+    // Корректное определение Telegram Web App
+    const isTelegram = Boolean(
+        tg && 
+        tg.platform !== "unknown" && 
+        tg.initDataUnsafe?.user && // проверяем наличие данных пользователя
+        window.navigator.userAgent.includes('TelegramWebApp')
+    );
+    
+    // Определение мобильного устройства без привязки к размеру окна
+    const isMobile = /iPhone|iPad|iPod|Android|Mobile|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-    if (isMobile) {
-        document.body.classList.add('is-mobile');
-    }
-    if (isTelegram) {
-        document.body.classList.add('is-telegram');
-    }
-    
     // Отладочная информация
-    const debugInfo = {
-        userAgent: navigator.userAgent,
-        platform: navigator.platform,
-        screenWidth: window.innerWidth,
-        screenHeight: window.innerHeight,
-        isMobile: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
-        isTelegram: window.Telegram?.WebApp ? true : false
-    };
-    console.log('Debug Info:', debugInfo);
+    console.log('Environment Debug:', {
+        isTelegram,
+        isMobile,
+        platform: {
+            telegram: tg?.platform || 'unknown',
+            browser: navigator.platform,
+            webView: window.navigator.userAgent.includes('TelegramWebApp') ? 'Telegram' : 'Browser'
+        },
+        viewport: {
+            width: window.innerWidth,
+            height: window.innerHeight
+        },
+        initData: tg?.initDataUnsafe?.user ? 'authorized' : 'unauthorized',
+        url: window.location.href
+    });
 
-    // Инициализация Telegram если открыто в нём
+    // Применяем классы и инициализируем интерфейс
+    document.body.classList.toggle('is-mobile', isMobile);
+    document.body.classList.toggle('is-telegram', isTelegram);
+
     if (isTelegram) {
-        tg.ready();
-        tg.expand();
-        
-        // Исправляем настройку кнопки
-        tg.MainButton.setParams({
-            text: document.documentElement.lang === 'ru' ? 'Создать' : 'Create',
-            is_visible: true,
-            color: '#0088cc'
-        }).onClick(() => {
-            generateLifeCalendar();
-        });
-        
-        // Показываем кнопку
-        tg.MainButton.show();
+        try {
+            await tg.ready();
+            tg.expand();
+            
+            // Настраиваем кнопку Telegram
+            tg.MainButton.setParams({
+                text: document.documentElement.lang === 'ru' ? 'Создать календарь' : 'Create calendar',
+                color: '#0088cc',
+                text_color: '#ffffff',
+                is_active: true,
+                is_visible: true
+            });
+            tg.MainButton.onClick(generateLifeCalendar);
+            tg.MainButton.show();
+        } catch (error) {
+            console.error('Telegram initialization failed:', error);
+            document.body.classList.remove('is-telegram');
+        }
 
         try {
             // Загружаем настройки из CloudStorage
@@ -109,15 +163,15 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const settings = JSON.parse(cloudSettings.settings);
                 
                 // Применяем настройки из CloudStorage если нет в куках
-                if (settings.lang && !getCookie('lang')) {
+                if (settings.lang && !getCookie('lang-select')) {
                     document.getElementById('lang-select').value = settings.lang;
                     changeLanguage(settings.lang);
                 }
-                if (settings.theme && !getCookie('theme')) {
-                    document.getElementById('theme-select') .value = settings.theme;
+                if (settings.theme && !getCookie('theme-select')) {
+                    document.getElementById('theme-select').value = settings.theme;
                     applyTheme(settings.theme);
                 }
-                if (settings.birthdate && !getCookie('birthdate')) {
+                if (settings.birthdate && !getCookie('birthdate-input')) {
                     document.getElementById('birthdate-input').value = settings.birthdate;
                     generateLifeCalendar();
                 }
@@ -126,7 +180,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             // Запрашиваем данные пользователя
             try {
                 const userDataResult = await tg.requestUser();
-                if (userDataResult && !getCookie('lang')) {
+                if (userDataResult && !getCookie('lang-select')) {
                     const userLang = userDataResult.language_code?.startsWith('ru') ? 'ru' : 'en';
                     document.getElementById('lang-select').value = userLang;
                     changeLanguage(userLang);
@@ -157,18 +211,18 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     // Восстанавливаем настройки из всех источников с приоритетами
-    const savedLang = getCookie('lang') || 
-                     localStorage.getItem('lang') ||
+    const savedLang = getCookie('lang-select') || 
+                     localStorage.getItem('lang-select') ||
                      (isTelegram ? tg.initDataUnsafe?.user?.language_code : null) ||
                      (navigator.language.startsWith('ru') ? 'ru' : 'en');
     
-    const savedTheme = getCookie('theme') || 
-                      localStorage.getItem('theme') ||
+    const savedTheme = getCookie('theme-select') || 
+                      localStorage.getItem('theme-select') ||
                       (isTelegram ? tg.colorScheme : null) ||
                       (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     
-    const savedBirthdate = getCookie('birthdate') || 
-                          localStorage.getItem('birthdate');
+    const savedBirthdate = getCookie('birthdate-input') || 
+                          localStorage.getItem('birthdate-input');
 
     // Применяем сохраненные настройки
     if (savedLang) {
@@ -185,7 +239,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.getElementById('birthdate-input').value = savedBirthdate;
         generateLifeCalendar();
     } else {
-        createLifeGrid(); // Показываем пустой календарь
+        createLifeGrid(); // Показываем пустой календарь по умолчанию
     }
 
     // Добавляем слушатели событий
@@ -202,13 +256,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
 
     // Слушатель изменения размера окна
-    window.addEventListener('resize', function() {
+    window.addEventListener('resize', debounce(function() {
         if (document.getElementById('birthdate-input').value) {
             generateLifeCalendar();
         } else {
             createLifeGrid();
         }
-    });
+    }, 250));
 });
 
 function createLifeGrid(livedWeeks = 0, totalYears = 91) {
@@ -224,21 +278,18 @@ function createLifeGrid(livedWeeks = 0, totalYears = 91) {
     const padding = isMobile ? 60 : 80;
     const fontSize = isMobile ? 11 : 12;
     const cellGap = isMobile ? 1 : 2;
-
-    // Настраиваем размеры canvas с учетом отступов
+    
+    // Настраиваем размеры canvas с учетом контейнера и отступов
     const totalWidth = weeksPerYear * (cellSize + cellGap) + padding * 2;
     const totalHeight = totalYears * (cellSize + cellGap) + padding * 2;
     
-    // Устанавливаем размеры canvas
     canvas.width = totalWidth;
     canvas.height = totalHeight;
 
-    // Масштабирование для retina дисплеев
+    // Масштабирование для retina
     const scale = window.devicePixelRatio;
-    canvas.style.width = `${totalWidth}px`;
-    canvas.style.height = `${totalHeight}px`;
-    canvas.width = totalWidth * scale;
-    canvas.height = totalHeight * scale;
+    canvas.width *= scale;
+    canvas.height *= scale;
     ctx.scale(scale, scale);
     
     // Получаем текущую тему
@@ -334,7 +385,7 @@ function createLifeGrid(livedWeeks = 0, totalYears = 91) {
 }
 
 function generateLifeCalendar() {
-    const birthdateInput = document.getElementById('birthdate-input'); // Исправленный ID
+    const birthdateInput = document.getElementById('birthdate-input');
     if (!birthdateInput) {
         console.error('Birthdate input not found');
         return;
@@ -375,7 +426,7 @@ function generateLifeCalendar() {
         const livedWeeks = Math.floor(ageInMilliseconds / (1000 * 60 * 60 * 24 * 7));
         
         // Сохраняем валидную дату
-        setCookie('birthdate', birthdate, 365);
+        setCookie('birthdate-input', birthdate, 365);
         saveSettings(
             document.getElementById('lang-select').value,
             document.getElementById('theme-select').value,
@@ -409,23 +460,37 @@ function getCookie(name) {
 }
 
 function saveSettings(lang, theme, birthdate) {
-    // Используем правильные ID для сохранения
-    const currentLang = document.getElementById('lang-select').value;
-    const currentTheme = document.getElementById('theme-select').value;
-    const currentBirthdate = document.getElementById('birthdate-input').value;
-
-    setCookie('lang', lang || currentLang, 365);
-    setCookie('theme', theme || currentTheme, 365);
-    if (birthdate) {
-        setCookie('birthdate', birthdate, 365);
+    try {
+        setCookie('lang-select', lang, 365);
+        setCookie('theme-select', theme, 365);
+        if (birthdate) {
+            setCookie('birthdate-input', birthdate, 365);
+        }
+        
+        // Сохранение в localStorage как бэкап
+        localStorage.setItem('lang-select', lang);
+        localStorage.setItem('theme-select', theme);
+        if (birthdate) {
+            localStorage.setItem('birthdate-input', birthdate);
+        }
+    } catch (error) {
+        console.error('Error saving settings:', error);
     }
 }
 
-function formatDate(date) {
-    if (!date || !isValidDate(date)) return '';
+function formatDate(dateString) {
+    if (!dateString) return '';
     
-    const parts = date.split('.');
-    return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+    // Всегда ожидаем формат ДД.ММ.ГГГГ
+    const parts = dateString.split('.');
+    if (parts.length !== 3) return '';
+    
+    const day = parts[0].padStart(2, '0');
+    const month = parts[1].padStart(2, '0');
+    const year = parts[2];
+    
+    // Преобразуем в формат YYYY-MM-DD
+    return `${year}-${month}-${day}`;
 }
 
 function calculateLivedWeeks() {
@@ -453,63 +518,102 @@ function isValidDate(dateString) {
     const month = parseInt(parts[1], 10);
     const year = parseInt(parts[2], 10);
     
-    // Проверка на числа
     if (isNaN(day) || isNaN(month) || isNaN(year)) return false;
     
-    // Проверка года
-    const currentYear = new Date().getFullYear();
-    if (year < 1900 || year > currentYear) return false;
-    
-    // Проверка месяца
+    // Проверяем диапазоны
+    if (year < 1900 || year > new Date().getFullYear()) return false;
     if (month < 1 || month > 12) return false;
     
-    // Проверка дня с учетом високосного года
     const daysInMonth = new Date(year, month, 0).getDate();
     if (day < 1 || day > daysInMonth) return false;
     
-    // Проверка что дата не в будущем
     const inputDate = new Date(year, month - 1, day);
     if (inputDate > new Date()) return false;
     
     return true;
 }
 
-function initializeDateInput() {
+function initializeDatePicker() {
     const birthdateInput = document.getElementById('birthdate-input');
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     
-    birthdateInput.addEventListener('input', function(e) {
-        let value = e.target.value.replace(/\D/g, '');
+    if (isMobile) {
+        birthdateInput.readOnly = true;
         
-        if (value.length > 8) value = value.slice(0, 8);
-        
-        if (value.length > 4) {
-            value = value.slice(0, 2) + '.' + value.slice(2, 4) + '.' + value.slice(4);
-        } else if (value.length > 2) {
-            value = value.slice(0, 2) + '.' + value.slice(2);
-        }
-        
-        e.target.value = value;
-        
-        // Автоматическая валидация при вводе
-        if (value.length === 10) {
-            if (!isValidDate(value)) {
-                e.target.classList.add('error');
-            } else {
-                e.target.classList.remove('error');
+        const fp = flatpickr(birthdateInput, {
+            dateFormat: "d.m.Y",
+            maxDate: "today",
+            minDate: "1900-01-01",
+            disableMobile: false,
+            allowInput: false,
+            locale: flatpickr.l10ns[document.documentElement.lang === 'ru' ? 'ru' : 'en'],
+            onChange: function(selectedDates) {
+                if (selectedDates[0]) {
+                    const date = selectedDates[0];
+                    const d = date.getDate().toString().padStart(2, '0');
+                    const m = (date.getMonth() + 1).toString().padStart(2, '0');
+                    const y = date.getFullYear();
+                    birthdateInput.value = `${d}.${m}.${y}`;
+                    generateLifeCalendar();
+                }
             }
-        }
-    });
+        });
+
+        birthdateInput._flatpickr = fp;
+
+        // Обновление локализации при смене языка
+        document.addEventListener('languageChanged', function() {
+            const lang = document.documentElement.lang;
+            const isRu = lang === 'ru';
+            
+            birthdateInput.placeholder = isRu ? 'ДД.ММ.ГГГГ' : 'DD.MM.YYYY';
+            
+            if (birthdateInput._flatpickr) {
+                birthdateInput._flatpickr.set('locale', flatpickr.l10ns[isRu ? 'ru' : 'en']);
+            }
+        });
+    } else {
+        // Десктопная версия с автоматическими точками
+        birthdateInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            let formattedValue = '';
+            
+            if (value.length > 0) {
+                formattedValue = value.slice(0, 2);
+                if (value.length > 2) {
+                    formattedValue += '.' + value.slice(2, 4);
+                    if (value.length > 4) {
+                        formattedValue += '.' + value.slice(4, 8);
+                    }
+                }
+            }
+            
+            e.target.value = formattedValue;
+            
+            if (value.length === 8) {
+                generateLifeCalendar();
+            }
+        });
+    }
 }
 
 const style = document.createElement('style');
 style.textContent = `
     .form-input.error {
-        border-color: #ff4444 !important;
-        background-color: rgba(255, 68, 68, 0.1) !important;
-    }
-    
-    .is-mobile .form-input.error {
-        border-width: 2px;
+        border-color: #ff4444;
+        background-color: rgba(255, 68, 68, 0.1);
     }
 `;
 document.head.appendChild(style);
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
