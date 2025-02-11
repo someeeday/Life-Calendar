@@ -198,33 +198,17 @@ canvas {
 
 /* Медиа-запросы */
 /* Mobile & Telegram Styles */
+/* Mobile & Telegram Styles */
 @media (max-width: 1024px) {
-    body {
-        padding: 0;
-    }
-
-    .app {
-        display: flex;
-        flex-direction: column;
-        min-height: 100vh;
-    }
-
-    .header {
-        margin: 16px 0;
-    }
-
-    .header__title {
-        font-size: 20px;
-    }
-
     .container {
         flex-direction: column;
         gap: 0;
+        width: 100%;
+        max-width: 100vw;
     }
 
     .settings {
         width: 100%;
-        max-width: none;
         padding: 16px;
         margin: 0;
         border-radius: 0;
@@ -233,67 +217,48 @@ canvas {
         border-bottom: 1px solid var(--color-border);
     }
 
-    .settings__form {
-        display: flex;
-        flex-direction: row;
-        flex-wrap: wrap;
-        gap: 12px;
-        align-items: center;
-    }
-
-    .form-group {
-        flex: 1;
-        min-width: 120px;
+    .settings,
+    .calendar {
+        width: 100%;
+        max-width: 100%;
         margin: 0;
     }
 
-    /* Группа с датой на всю ширину */
+    .settings__form {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr); /* два элемента в строке */
+        gap: 12px;
+        width: 100%; /* растягиваем на всю ширину */
+        align-items: start;
+    }
+
+    /* Расширяем поле даты на всю ширину */
     .form-group:nth-child(2) {
-        flex-basis: 100%;
+        grid-column: 1 / -1;
     }
 
-    .form-label {
-        font-size: 12px;
-        margin-bottom: 4px;
-    }
-
+    /* Общие стили для всех полей ввода */
     .form-select,
     .form-input {
-        height: 36px;
-        font-size: 14px;
-        border-radius: 6px;
+        width: 100%;
+        min-width: 100%;
+        height: 44px; /* увеличиваем высоту для удобства */
     }
 
-    /* Специальные стили для input даты */
-    .form-input {
-        text-align: center;
-        font-size: 16px;
-        height: 42px;
-    }
-
-    /* Убираем кнопку на мобильных (будет использоваться кнопка Telegram) */
+    /* Кнопка на всю ширину */
     .button {
-        display: none;
+        grid-column: 1 / -1;
+        width: 100%;
+        height: 44px;
+        margin-top: 8px;
     }
 
     /* Календарь */
     .calendar {
-        flex: 1;
-        padding: 12px;
-        border-radius: 0;
-        box-shadow: none;
-        background: var(--color-background);
-    }
-
-    /* Footer */
-    .footer {
-        margin-top: auto;
-        padding: 12px;
-        border-top: 1px solid var(--color-border);
-    }
-
-    .footer__content {
-        font-size: 12px;
+        width: 100%;
+        aspect-ratio: 1/2;
+        overflow: auto;
+        -webkit-overflow-scrolling: touch;
     }
 }
 
@@ -306,6 +271,10 @@ canvas {
     background: var(--tg-theme-secondary-bg-color, var(--color-surface));
 }
 
+.is-telegram .button {
+    display: none;
+}
+
 .is-telegram .form-select,
 .is-telegram .form-input {
     background: var(--tg-theme-bg-color, var(--color-surface));
@@ -315,25 +284,6 @@ canvas {
 
 .is-telegram .calendar {
     background: var(--tg-theme-bg-color, var(--color-background));
-}
-
-.is-mobile .settings {
-    width: 100%;
-    max-width: none;
-    padding: 16px;
-    margin: 0;
-    border-radius: 0;
-    box-shadow: none;
-    background: var(--color-surface);
-    border-bottom: 1px solid var(--color-border);
-}
-
-.is-mobile .settings__form {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 12px;
-    align-items: center;
 }
 
 @media (max-width: 480px) {
