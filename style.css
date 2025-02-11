@@ -197,77 +197,124 @@ canvas {
 }
 
 /* Медиа-запросы */
+/* Mobile & Telegram Styles */
 @media (max-width: 1024px) {
+    body {
+        padding: 0;
+    }
+
+    .app {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+
+    .header {
+        margin: 16px 0;
+    }
+
+    .header__title {
+        font-size: 20px;
+    }
+
     .container {
         flex-direction: column;
-        align-items: center;
-        gap: var(--spacing-md);
+        gap: 0;
     }
-    
+
     .settings {
         width: 100%;
-        max-width: 400px;
-        padding: var(--spacing-lg);
-        margin-bottom: var(--spacing-md);
-        border-radius: 12px;
+        max-width: none;
+        padding: 16px;
+        margin: 0;
+        border-radius: 0;
+        box-shadow: none;
         background: var(--color-surface);
+        border-bottom: 1px solid var(--color-border);
     }
 
     .settings__form {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr); /* Два элемента в строке */
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
         gap: 12px;
-    }
-
-    /* Поле даты на всю ширину */
-    .settings__form > div:nth-child(2) {
-        grid-column: 1 / -1;
+        align-items: center;
     }
 
     .form-group {
+        flex: 1;
+        min-width: 120px;
         margin: 0;
     }
 
+    /* Группа с датой на всю ширину */
+    .form-group:nth-child(2) {
+        flex-basis: 100%;
+    }
+
     .form-label {
-        font-size: 13px;
-        margin-bottom: 6px;
-        opacity: 0.85;
+        font-size: 12px;
+        margin-bottom: 4px;
     }
 
     .form-select,
     .form-input {
-        height: 42px;
-        font-size: 15px;
-        padding: 0 12px;
-        text-align: center;
-        border-radius: 8px;
+        height: 36px;
+        font-size: 14px;
+        border-radius: 6px;
     }
 
-    /* Поле даты больше остальных */
+    /* Специальные стили для input даты */
     .form-input {
-        height: 46px;
+        text-align: center;
         font-size: 16px;
-        letter-spacing: 0.5px;
+        height: 42px;
     }
 
-    /* Кнопка внизу на всю ширину */
+    /* Убираем кнопку на мобильных (будет использоваться кнопка Telegram) */
     .button {
-        grid-column: 1 / -1;
-        height: 46px;
-        font-size: 15px;
-        font-weight: 600;
-        border-radius: 10px;
-        margin-top: 4px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        display: none;
     }
 
     /* Календарь */
     .calendar {
-        width: 100%;
-        padding: var(--spacing-md);
-        border-radius: 12px;
+        flex: 1;
+        padding: 12px;
+        border-radius: 0;
+        box-shadow: none;
+        background: var(--color-background);
     }
+
+    /* Footer */
+    .footer {
+        margin-top: auto;
+        padding: 12px;
+        border-top: 1px solid var(--color-border);
+    }
+
+    .footer__content {
+        font-size: 12px;
+    }
+}
+
+/* Специальные стили для Telegram */
+.is-telegram {
+    background: var(--tg-theme-bg-color, var(--color-background));
+}
+
+.is-telegram .settings {
+    background: var(--tg-theme-secondary-bg-color, var(--color-surface));
+}
+
+.is-telegram .form-select,
+.is-telegram .form-input {
+    background: var(--tg-theme-bg-color, var(--color-surface));
+    border-color: var(--tg-theme-hint-color, var(--color-border));
+    color: var(--tg-theme-text-color, var(--color-text));
+}
+
+.is-telegram .calendar {
+    background: var(--tg-theme-bg-color, var(--color-background));
 }
 
 

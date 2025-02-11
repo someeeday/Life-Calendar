@@ -61,6 +61,17 @@ document.addEventListener('DOMContentLoaded', async function() {
     const tg = window.Telegram?.WebApp;
     const isTelegram = tg && tg.platform !== "unknown";
     
+    // Отладочная информация
+    const debugInfo = {
+        userAgent: navigator.userAgent,
+        platform: navigator.platform,
+        screenWidth: window.innerWidth,
+        screenHeight: window.innerHeight,
+        isMobile: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
+        isTelegram: window.Telegram?.WebApp ? true : false
+    };
+    console.log('Debug Info:', debugInfo);
+    
     // Инициализация Telegram если открыто в нём
     if (isTelegram) {
         tg.ready();
