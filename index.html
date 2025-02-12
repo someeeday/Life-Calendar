@@ -87,11 +87,14 @@
                                    data-text-en="Birth date">
                                 Дата рождения
                             </label>
-                            <input type="date" 
-                                   id="birthdate-input" 
-                                   name="birthdate"
-                                   class="form-input"
-                                   aria-label="Date of birth">
+                            <div class="date-input-container">
+                                <input type="text" 
+                                       id="birthdate-input" 
+                                       name="birthdate"
+                                       class="form-input"
+                                       aria-label="Date of birth">
+                                <span id="calendar-icon" class="calendar-icon"></span>
+                            </div>
                         </div>
                     
                         <button type="button" 

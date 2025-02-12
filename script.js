@@ -494,15 +494,22 @@ function isValidDate(dateString) {
     return true;
 }
 
+function hideCalendarIfNotHovered() {
+    const calendar = document.getElementById('custom-calendar');
+    const container = document.querySelector('.date-input-container');
+    if (!calendar || !container) return;
+    if (!calendar.matches(':hover') && !container.matches(':hover')) {
+        hideCustomCalendar();
+    }
+}
+
 // Инициализация выбора даты
 function initializeDatePicker() {
     const birthdateInput = document.getElementById('birthdate-input');
     const lang = document.documentElement.lang || 'ru';
-    // Используем тип "text" для работы с нашим календарём и автозаполнением
     birthdateInput.type = "text";
     birthdateInput.placeholder = lang === 'ru' ? 'ДД.ММ.ГГГГ' : 'DD.MM.YYYY';
 
-    // Если отсутствует элемент для вывода ошибок, создаём его
     let errorElem = document.getElementById('birthdate-error');
     if (!errorElem) {
         errorElem = document.createElement('div');
@@ -515,7 +522,6 @@ function initializeDatePicker() {
 
     birthdateInput.addEventListener('input', formatBirthdateInput);
 
-    // При потере фокуса проверяем корректность ввода и выводим ошибку (без alert)
     birthdateInput.addEventListener('blur', function(e) {
         if (e.target.value && !isValidDate(e.target.value)) {
             errorElem.textContent = lang === 'ru'
@@ -528,12 +534,21 @@ function initializeDatePicker() {
         }
     });
 
-    // При фокусе показываем наш кастомный календарь
+    // Показываем календарь при фокусе
     birthdateInput.addEventListener('focus', function() {
         showCustomCalendar(birthdateInput);
     });
 
-    // При клике вне календаря – скрываем его
+    // Открываем календарь при наведении на контейнер ввода
+    const dateContainer = document.querySelector('.date-input-container');
+    if (dateContainer) {
+        dateContainer.addEventListener('mouseenter', function() {
+            showCustomCalendar(birthdateInput);
+        });
+        dateContainer.addEventListener('mouseleave', hideCalendarIfNotHovered);
+    }
+
+    // Если клик вне календаря и поля – скрываем календарь
     document.addEventListener('click', function(event) {
         const calendar = document.getElementById('custom-calendar');
         if (calendar && !calendar.contains(event.target) && event.target !== birthdateInput) {
@@ -566,13 +581,12 @@ function debounce(func, wait) {
 }
 
 // Функция показа кастомного календаря под элементом ввода
-function showCustomCalendar(inputElement) {
+function showCustomCalendar(birthdateInput) {
     let calendar = document.getElementById('custom-calendar');
     if (!calendar) {
         calendar = document.createElement('div');
         calendar.id = 'custom-calendar';
         calendar.className = 'custom-calendar';
-        // Структура календаря: header с селектами и контейнер для дат
         calendar.innerHTML = `
             <div class="calendar-header">
                 <select id="calendar-month-select"></select>
@@ -581,40 +595,44 @@ function showCustomCalendar(inputElement) {
             <div class="calendar-days"></div>
             <div class="calendar-dates"></div>
         `;
-        document.body.appendChild(calendar);
+        // Добавляем календарь после контейнера поля ввода
+        birthdateInput.parentNode.insertAdjacentElement('afterend', calendar);
 
-        // Заполняем заголовок (дни недели)
+        // При наведении на календарь он остаётся открытым
+        calendar.addEventListener('mouseenter', function() {
+            // пустой обработчик
+        });
+        calendar.addEventListener('mouseleave', hideCalendarIfNotHovered);
+
+        // Заполняем заголовок (названия дней недели)
         const dayNames = document.documentElement.lang === 'ru'
-            ? ['Вс','Пн','Вт','Ср','Чт','Пт','Сб']
-            : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+            ? ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']
+            : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         const daysContainer = calendar.querySelector('.calendar-days');
         daysContainer.innerHTML = dayNames.map(day => `<div class="day-name">${day}</div>`).join('');
 
-        // События для селектов – обновляем только сетку дат при изменении
+        // Обработчики изменения селектов месяца и года
         const monthSelect = calendar.querySelector('#calendar-month-select');
         const yearSelect = calendar.querySelector('#calendar-year-select');
         monthSelect.addEventListener('change', function() {
             updateCalendarDates(calendar, parseInt(yearSelect.value, 10), parseInt(monthSelect.value, 10));
-            updateCalendarHighlight(inputElement, calendar);
+            updateCalendarHighlight(birthdateInput, calendar);
         });
         yearSelect.addEventListener('change', function() {
             updateCalendarDates(calendar, parseInt(yearSelect.value, 10), parseInt(monthSelect.value, 10));
-            updateCalendarHighlight(inputElement, calendar);
+            updateCalendarHighlight(birthdateInput, calendar);
         });
     }
-    // Используем введённую дату или текущую, чтобы задать выбранный месяц/год
+
     let currentDate = new Date();
-    if (isValidDate(inputElement.value)) {
-        currentDate = new Date(formatDate(inputElement.value));
+    if (isValidDate(birthdateInput.value)) {
+        currentDate = new Date(formatDate(birthdateInput.value));
     }
     populateSelectors(calendar, currentDate.getFullYear(), currentDate.getMonth());
     updateCalendarDates(calendar, currentDate.getFullYear(), currentDate.getMonth());
-    updateCalendarHighlight(inputElement, calendar);
+    updateCalendarHighlight(birthdateInput, calendar);
 
-    // Располагаем календарь под полем ввода
-    const rect = inputElement.getBoundingClientRect();
-    calendar.style.top = (rect.bottom + window.scrollY) + 'px';
-    calendar.style.left = (rect.left + window.scrollX) + 'px';
+    // Показываем календарь
     calendar.style.display = 'block';
     requestAnimationFrame(() => {
         calendar.classList.add('open');
