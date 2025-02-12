@@ -72,9 +72,8 @@ body {
 .container {
     display: flex;
     gap: var(--spacing-lg);
-    min-height: calc(100vh - var(--header-height) - var(--spacing-md) * 4); /* Учитываем отступы */
+    /* Убираем min-height отсюда */
 }
-
 /* Панель настроек */
 .settings {
     background: var(--color-surface);
@@ -83,8 +82,8 @@ body {
     box-shadow: var(--shadow-md);
     width: var(--settings-width);
     flex-shrink: 0;
-    height: max-content; /* Изменяем на max-content */
-    align-self: flex-start;
+    height: fit-content; /* Используем fit-content вместо max-content */
+    align-self: flex-start; /* Оставляем для правильного позиционирования */
     position: sticky;
     top: var(--spacing-md);
 }
@@ -217,7 +216,6 @@ canvas {
     .container {
         flex-direction: column;
         gap: 0;
-        min-height: auto; /* Сбрасываем минимальную высоту на мобильных */
     }
 
     .settings {
