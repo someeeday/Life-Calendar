@@ -1,3 +1,4 @@
+// Функция смены языка
 function changeLanguage(lang) {
     // Обновляем переводы на странице
     document.querySelectorAll('[data-text-' + lang + ']').forEach(element => {
@@ -11,31 +12,7 @@ function changeLanguage(lang) {
     const birthdateInput = document.getElementById('birthdate-input');
     if (birthdateInput) {
         birthdateInput.placeholder = lang === 'ru' ? 'ДД.ММ.ГГГГ' : 'DD.MM.YYYY';
-        
-        // Обновляем flatpickr если он инициализирован
-        if (birthdateInput._flatpickr) {
-            birthdateInput._flatpickr.set('locale', {
-                ...flatpickr.l10ns[lang === 'ru' ? 'ru' : 'en'],
-                firstDayOfWeek: 1,
-                formatDate: (date) => {
-                    const d = date.getDate().toString().padStart(2, '0');
-                    const m = (date.getMonth() + 1).toString().padStart(2, '0');
-                    const y = date.getFullYear();
-                    return `${d}.${m}.${y}`;
-                }
-            });
-            
-            // Принудительно обновляем отображение даты
-            if (birthdateInput.value) {
-                const currentDate = birthdateInput._flatpickr.selectedDates[0];
-                if (currentDate) {
-                    const d = currentDate.getDate().toString().padStart(2, '0');
-                    const m = (currentDate.getMonth() + 1).toString().padStart(2, '0');
-                    const y = currentDate.getFullYear();
-                    birthdateInput.value = `${d}.${m}.${y}`;
-                }
-            }
-        }
+        // Убираем обновление flatpickr, так как он больше не используется
     }
     
     // Устанавливаем язык документа
@@ -50,11 +27,12 @@ function changeLanguage(lang) {
     document.dispatchEvent(new Event('languageChanged'));
     
     // Перерисовываем календарь если он уже был создан
-    if (currentBirthdate && document.querySelector('.calendar canvas').getContext('2d')) {
+    if (currentBirthdate && document.querySelector('.calendar canvas') && document.querySelector('.calendar canvas').getContext('2d')) {
         createLifeGrid(calculateLivedWeeks());
     }
 }
 
+// Функция смены темы
 function applyTheme(theme) {
     const root = document.documentElement;
     root.setAttribute('data-theme', theme);
@@ -100,6 +78,7 @@ function applyTheme(theme) {
     createLifeGrid(calculateLivedWeeks());
 }
 
+// Основная инициализация
 document.addEventListener('DOMContentLoaded', async function() {
     initializeDatePicker();
     const tg = window.Telegram?.WebApp;
@@ -193,38 +172,28 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
-    // Инициализация выбора даты
-    if (isMobile || isTelegram) {
-        flatpickr("#birthdate", {
-            dateFormat: "d.m.Y",
-            maxDate: "today",
-            locale: document.documentElement.lang === 'ru' ? 'ru' : 'en'
-        });
-    } else {
+    // Для десктопных устройств (не мобильных) добавляем событие на изменение поля даты
+    if (!isMobile) {
         const birthdateInput = document.getElementById('birthdate-input');
-        birthdateInput.addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            if (value.length > 2) value = value.slice(0, 2) + '.' + value.slice(2);
-            if (value.length > 5) value = value.slice(0, 5) + '.' + value.slice(5, 9);
-            e.target.value = value;
+        birthdateInput.addEventListener('change', function() {
+            generateLifeCalendar();
         });
     }
 
     // Восстанавливаем настройки из всех источников с приоритетами
     const savedLang = getCookie('lang-select') || 
                      localStorage.getItem('lang-select') ||
-                     (isTelegram ? tg.initDataUnsafe?.user?.language_code : null) ||
+                     (tg?.initDataUnsafe?.user?.language_code?.startsWith('ru') ? 'ru' : 'en') ||
                      (navigator.language.startsWith('ru') ? 'ru' : 'en');
     
     const savedTheme = getCookie('theme-select') || 
                       localStorage.getItem('theme-select') ||
-                      (isTelegram ? tg.colorScheme : null) ||
+                      (tg ? tg.colorScheme : null) ||
                       (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     
     const savedBirthdate = getCookie('birthdate-input') || 
                           localStorage.getItem('birthdate-input');
 
-    // Применяем сохраненные настройки
     if (savedLang) {
         document.getElementById('lang-select').value = savedLang;
         changeLanguage(savedLang);
@@ -239,10 +208,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.getElementById('birthdate-input').value = savedBirthdate;
         generateLifeCalendar();
     } else {
-        createLifeGrid(); // Показываем пустой календарь по умолчанию
+        createLifeGrid();
     }
 
-    // Добавляем слушатели событий
+    // Добавляем слушатели событий формы
     document.querySelector('form').addEventListener('submit', function(e) {
         e.preventDefault();
         generateLifeCalendar();
@@ -255,7 +224,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     });
 
-    // Слушатель изменения размера окна
     window.addEventListener('resize', debounce(function() {
         if (document.getElementById('birthdate-input').value) {
             generateLifeCalendar();
@@ -265,6 +233,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }, 250));
 });
 
+// Функция отрисовки календаря жизни
 function createLifeGrid(livedWeeks = 0, totalYears = 91) {
     const weeksPerYear = 52;
     const canvas = document.getElementById('lifeCanvas');
@@ -272,21 +241,21 @@ function createLifeGrid(livedWeeks = 0, totalYears = 91) {
     
     const ctx = canvas.getContext('2d');
     
-    // Увеличенные размеры для лучшей читаемости
+    // Определяем размеры для мобильных и десктопных устройств
     const isMobile = document.body.classList.contains('is-mobile');
     const cellSize = isMobile ? 12 : 15;
     const padding = isMobile ? 60 : 80;
     const fontSize = isMobile ? 11 : 12;
     const cellGap = isMobile ? 1 : 2;
     
-    // Настраиваем размеры canvas с учетом контейнера и отступов
+    // Вычисляем размеры canvas
     const totalWidth = weeksPerYear * (cellSize + cellGap) + padding * 2;
     const totalHeight = totalYears * (cellSize + cellGap) + padding * 2;
     
     canvas.width = totalWidth;
     canvas.height = totalHeight;
 
-    // Масштабирование для retina
+    // Масштабирование для retina дисплеев
     const scale = window.devicePixelRatio;
     canvas.width *= scale;
     canvas.height *= scale;
@@ -308,30 +277,27 @@ function createLifeGrid(livedWeeks = 0, totalYears = 91) {
         future: '#f0f0f0'
     };
     
-    // Очистка canvas
+    // Очищаем canvas
     ctx.fillStyle = colors.background;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Настройка текста
+    // Настраиваем шрифты и подписи
     ctx.font = `${fontSize}px Roboto`;
     ctx.fillStyle = colors.text;
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'center';
     
-    // Подписи с переводом
+    // Подписи для недель и возраста
     const lang = document.documentElement.lang || 'ru';
     const labels = {
         ru: { age: '← Возраст', weeks: 'Недели года →' },
         en: { age: '← Age', weeks: 'Weeks of the Year →' }
     };
     
-    // Обновляем позиции заголовков
     ctx.textAlign = 'left';
     ctx.fillText(labels[lang].weeks, padding, padding - 45);
     
-    // Фиксированное позиционирование для текста возраста
-    const ageTextPosition = 0; // Можно настроить это значение
-
+    const ageTextPosition = 0;
     ctx.save();
     ctx.translate(padding - 45, padding + ageTextPosition);
     ctx.rotate(-Math.PI / 2);
@@ -339,7 +305,6 @@ function createLifeGrid(livedWeeks = 0, totalYears = 91) {
     ctx.fillText(labels[lang].age, 0, 0);
     ctx.restore();
 
-    // Обновляем позиции цифр для недель
     ctx.textAlign = 'center';
     let weekNumbers = [1];
     for (let i = 5; i <= 50; i += 5) {
@@ -355,14 +320,13 @@ function createLifeGrid(livedWeeks = 0, totalYears = 91) {
         }
     }
     
-    // Рисуем цифры возраста (по центру ячеек)
     ctx.textAlign = 'right';
     for (let year = 0; year <= totalYears; year += 5) {
         const y = padding + year * (cellSize + cellGap) + cellSize / 2;
         ctx.fillText(year.toString(), padding - 20, y);
     }
     
-    // Рисуем сетку с отступами
+    // Рисуем ячейки календаря
     const totalWeeks = totalYears * weeksPerYear;
     ctx.strokeStyle = colors.grid;
     ctx.lineWidth = 0.5;
@@ -371,19 +335,19 @@ function createLifeGrid(livedWeeks = 0, totalYears = 91) {
         const col = week % weeksPerYear;
         const row = Math.floor(week / weeksPerYear);
         
-        // Вычисляем позиции с учетом отступов
         const x = padding + col * (cellSize + cellGap);
         const y = padding + row * (cellSize + cellGap);
         
-        // Рисуем ячейку с закругленными углами
         ctx.fillStyle = week < livedWeeks ? colors.lived : colors.future;
         ctx.beginPath();
+        // Используем метод roundRect, поддерживаемый современными браузерами
         ctx.roundRect(x, y, cellSize, cellSize, cellSize * 0.15);
         ctx.fill();
         ctx.stroke();
     }
 }
 
+// Генерация календаря жизни по введённой дате
 function generateLifeCalendar() {
     const birthdateInput = document.getElementById('birthdate-input');
     if (!birthdateInput) {
@@ -409,7 +373,6 @@ function generateLifeCalendar() {
         const birthDate = new Date(formattedBirthdate);
         const currentDate = new Date();
         
-        // Вычисляем возраст
         const ageInMilliseconds = currentDate - birthDate;
         const ageInYears = ageInMilliseconds / (1000 * 60 * 60 * 24 * 365.25);
         
@@ -425,7 +388,7 @@ function generateLifeCalendar() {
         
         const livedWeeks = Math.floor(ageInMilliseconds / (1000 * 60 * 60 * 24 * 7));
         
-        // Сохраняем валидную дату
+        // Сохраняем дату
         setCookie('birthdate-input', birthdate, 365);
         saveSettings(
             document.getElementById('lang-select').value,
@@ -433,7 +396,6 @@ function generateLifeCalendar() {
             birthdate
         );
         
-        // Ограничиваем максимальное количество недель
         createLifeGrid(Math.min(livedWeeks, 91 * 52));
         
     } catch (error) {
@@ -444,8 +406,7 @@ function generateLifeCalendar() {
     }
 }
 
-
-// Функции для работы с куками
+// Работа с куками
 function setCookie(name, value, days) {
     const expires = new Date();
     expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
@@ -466,8 +427,6 @@ function saveSettings(lang, theme, birthdate) {
         if (birthdate) {
             setCookie('birthdate-input', birthdate, 365);
         }
-        
-        // Сохранение в localStorage как бэкап
         localStorage.setItem('lang-select', lang);
         localStorage.setItem('theme-select', theme);
         if (birthdate) {
@@ -478,21 +437,23 @@ function saveSettings(lang, theme, birthdate) {
     }
 }
 
+// Преобразование даты: из DD.MM.YYYY в ISO (YYYY-MM-DD)
 function formatDate(dateString) {
     if (!dateString) return '';
-    
-    // Всегда ожидаем формат ДД.ММ.ГГГГ
+    // Если значение в ISO формате (YYYY-MM-DD), возвращаем как есть
+    if (dateString.includes('-')) {
+        return dateString;
+    }
+    // Ожидаем формат DD.MM.YYYY
     const parts = dateString.split('.');
     if (parts.length !== 3) return '';
-    
     const day = parts[0].padStart(2, '0');
     const month = parts[1].padStart(2, '0');
     const year = parts[2];
-    
-    // Преобразуем в формат YYYY-MM-DD
     return `${year}-${month}-${day}`;
 }
 
+// Вычисление количества прожитых недель
 function calculateLivedWeeks() {
     const birthdate = document.getElementById('birthdate-input').value;
     if (!birthdate || !isValidDate(birthdate)) return 0;
@@ -508,81 +469,56 @@ function calculateLivedWeeks() {
     }
 }
 
+// Проверка корректности даты
 function isValidDate(dateString) {
     if (!dateString) return false;
-    
-    const parts = dateString.split('.');
-    if (parts.length !== 3) return false;
-    
-    const day = parseInt(parts[0], 10);
-    const month = parseInt(parts[1], 10);
-    const year = parseInt(parts[2], 10);
-    
-    if (isNaN(day) || isNaN(month) || isNaN(year)) return false;
-    
-    // Проверяем диапазоны
-    if (year < 1900 || year > new Date().getFullYear()) return false;
-    if (month < 1 || month > 12) return false;
-    
-    const daysInMonth = new Date(year, month, 0).getDate();
-    if (day < 1 || day > daysInMonth) return false;
-    
-    const inputDate = new Date(year, month - 1, day);
-    if (inputDate > new Date()) return false;
-    
+    let date;
+    if (dateString.includes('.')) {
+        const parts = dateString.split('.');
+        if (parts.length !== 3) return false;
+        const day = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10);
+        const year = parseInt(parts[2], 10);
+        if (isNaN(day) || isNaN(month) || isNaN(year)) return false;
+        if (year < 1900 || year > new Date().getFullYear()) return false;
+        const daysInMonth = new Date(year, month, 0).getDate();
+        if (day < 1 || day > daysInMonth) return false;
+        date = new Date(year, month - 1, day);
+    } else if (dateString.includes('-')) {
+        date = new Date(dateString);
+        if (isNaN(date)) return false;
+    } else {
+        return false;
+    }
+    if (date > new Date()) return false;
     return true;
 }
 
+// Инициализация выбора даты
 function initializeDatePicker() {
     const birthdateInput = document.getElementById('birthdate-input');
+    const lang = document.documentElement.lang || 'ru';
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     
     if (isMobile) {
+        // На мобильном используем нативный date‑picker без изменения значения
+        birthdateInput.type = "date";
         birthdateInput.readOnly = true;
         
-        const fp = flatpickr(birthdateInput, {
-            dateFormat: "d.m.Y",
-            maxDate: "today",
-            minDate: "1900-01-01",
-            disableMobile: false,
-            allowInput: false,
-            locale: {
-                ...flatpickr.l10ns[document.documentElement.lang === 'ru' ? 'ru' : 'en'],
-                firstDayOfWeek: 1,
-                // Измененный формат для placeholder в зависимости от языка
-                placeholder: document.documentElement.lang === 'ru' ? 'ДД.ММ.ГГГГ' : 'DD.MM.YYYY'
-            },
-            onChange: function(selectedDates) {
-                if (selectedDates[0]) {
-                    const date = selectedDates[0];
-                    const d = date.getDate().toString().padStart(2, '0');
-                    const m = (date.getMonth() + 1).toString().padStart(2, '0');
-                    const y = date.getFullYear();
-                    birthdateInput.value = `${d}.${m}.${y}`;
-                    generateLifeCalendar();
-                }
-            }
-        });
-
-        birthdateInput._flatpickr = fp;
-
-        // Обновление локализации при смене языка
-        document.addEventListener('languageChanged', function() {
-            const lang = document.documentElement.lang;
-            const isRu = lang === 'ru';
-            
-            birthdateInput.placeholder = isRu ? 'ДД.ММ.ГГГГ' : 'DD.MM.YYYY';
-            
-            if (birthdateInput._flatpickr) {
-                birthdateInput._flatpickr.set('locale', flatpickr.l10ns[isRu ? 'ru' : 'en']);
+        birthdateInput.addEventListener('change', function() {
+            // Используем нативное ISO‑значение (yyyy-MM-dd)
+            if (birthdateInput.value) {
+                generateLifeCalendar();
             }
         });
     } else {
-        // Десктопная версия с автоматическими точками
+        // На ПК используем тип "text" с автоматическим форматом DD.MM.ГГГГ
+        birthdateInput.type = "text";
+        birthdateInput.placeholder = lang === 'ru' ? 'ДД.ММ.ГГГГ' : 'DD.MM.YYYY';
+        
         birthdateInput.addEventListener('input', function(e) {
             let value = e.target.value.replace(/\D/g, '');
             let formattedValue = '';
-            
             if (value.length > 0) {
                 formattedValue = value.slice(0, 2);
                 if (value.length > 2) {
@@ -592,16 +528,17 @@ function initializeDatePicker() {
                     }
                 }
             }
-            
             e.target.value = formattedValue;
             
-            if (value.length === 8) {
+            // Если введено полное значение (10 символов), обновляем календарь
+            if (formattedValue.length === 10) {
                 generateLifeCalendar();
             }
         });
     }
 }
 
+// Добавляем небольшой стиль для индикации ошибки в поле ввода
 const style = document.createElement('style');
 style.textContent = `
     .form-input.error {
@@ -611,6 +548,7 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
+// Функция debounce
 function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {

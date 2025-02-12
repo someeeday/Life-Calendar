@@ -72,8 +72,8 @@ body {
 .container {
     display: flex;
     gap: var(--spacing-lg);
-    /* Убираем min-height отсюда */
 }
+
 /* Панель настроек */
 .settings {
     background: var(--color-surface);
@@ -82,8 +82,8 @@ body {
     box-shadow: var(--shadow-md);
     width: var(--settings-width);
     flex-shrink: 0;
-    height: fit-content; /* Используем fit-content вместо max-content */
-    align-self: flex-start; /* Оставляем для правильного позиционирования */
+    height: fit-content;
+    align-self: flex-start;
     position: sticky;
     top: var(--spacing-md);
 }
@@ -136,6 +136,31 @@ body {
     background-repeat: no-repeat;
     background-position: right 12px center;
     padding-right: 32px;
+}
+
+/* Стили для нативного date‑picker */
+.form-input[type="date"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-color: var(--color-surface);
+    font-size: 14px;
+    padding: 0 var(--spacing-md);
+    height: 40px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text);
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 40px;
+    background-size: 20px;
+    /* Иконка для светлой темы (чёрная) */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24'%3E%3Cpath fill='%23000000' d='M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z'/%3E%3C/svg%3E");
+}
+
+[data-theme="dark"] .form-input[type="date"] {
+    /* Иконка для тёмной темы (белая) */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24'%3E%3Cpath fill='%23ffffff' d='M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z'/%3E%3C/svg%3E");
 }
 
 /* Hover и Focus состояния */
@@ -236,26 +261,6 @@ canvas {
         height: 44px;
         font-size: 16px;
     }
-
-    .form-input[type="text"][readonly] {
-        background-repeat: no-repeat !important;
-        background-position: right 8px center !important;
-        padding-right: 32px !important;
-        /* Меняем цвет иконки на более темный */
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24'%3E%3Cpath fill='%23333333' d='M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z'/%3E%3C/svg%3E") !important;
-    }
-
-    /* Иконка календаря для темной темы остается белой */
-    [data-theme="dark"] .form-input[type="text"][readonly] {
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24'%3E%3Cpath fill='%23ffffff' d='M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z'/%3E%3C/svg%3E") !important;
-    } 
-}
-
-/* Темная тема для мобильных */
-[data-theme="dark"] .form-select,
-[data-theme="dark"] .form-input {
-    background-color: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.1);
 }
 
 /* Стили для Telegram */
@@ -280,46 +285,4 @@ canvas {
 
 .is-telegram .calendar {
     background: var(--tg-theme-bg-color, var(--color-background));
-}
-
-.flatpickr-calendar {
-    background: var(--color-surface) !important;
-    color: var(--color-text) !important;
-    border-color: var(--color-border) !important;
-    font-size: 16px !important;
-}
-
-.flatpickr-current-month {
-    font-size: 16px !important;
-}
-
-.flatpickr-monthDropdown-months {
-    font-size: 16px !important;
-}
-
-.flatpickr-weekday {
-    font-size: 14px !important;
-}
-
-.flatpickr-day {
-    color: var(--color-text) !important;
-    font-size: 14px !important;
-    line-height: 37px !important;
-}
-
-.flatpickr-day.selected {
-    background: var(--color-primary) !important;
-    color: white !important;
-    border-color: var(--color-primary) !important;
-}
-
-.flatpickr-day:hover {
-    background: var(--color-hover) !important;
-    border-color: var(--color-hover) !important;
-    color: white !important;
-}
-
-[data-theme="dark"] {
-    /* ...existing code... */
-    --icon-color: #ffffff;
 }

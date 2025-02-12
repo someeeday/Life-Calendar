@@ -19,17 +19,16 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="style.css">
 
     <!-- Yandex.Metrika counter -->
-    <script type="text/javascript">
+    <script type="text/javascript" >
         (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
         m[i].l=1*new Date();
         for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
         k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
         (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
-
+    
         ym(99837348, "init", {
             clickmap:true,
             trackLinks:true,
@@ -50,7 +49,7 @@
                 <aside class="settings">
                     <form class="settings__form" id="settingsForm" autocomplete="off" novalidate>
                         <div class="lang-theme-container">
-                            <!-- Язык -->
+
                             <div class="form-group">
                                 <label for="lang-select" class="form-label" id="lang_select_lang" 
                                        data-text-ru="Язык"
@@ -66,7 +65,6 @@
                                 </select>
                             </div>
                             
-                            <!-- Тема -->
                             <div class="form-group">
                                 <label for="theme-select" class="form-label" id="lang_set_theme" 
                                        data-text-ru="Тема" 
@@ -83,21 +81,16 @@
                             </div>
                         </div>
 
-                        <!-- Дата рождения -->
                         <div class="form-group">
                             <label for="birthdate-input" class="form-label" id="lang_set_birthday" 
                                    data-text-ru="Дата рождения" 
                                    data-text-en="Birth date">
                                 Дата рождения
                             </label>
-                            <input type="text" 
+                            <input type="date" 
                                    id="birthdate-input" 
                                    name="birthdate"
                                    class="form-input"
-                                   placeholder="ДД.ММ.ГГГГ"
-                                   inputmode="numeric"
-                                   pattern="\d{2}\.\d{2}\.\d{4}"
-                                   autocomplete="bday"
                                    aria-label="Date of birth">
                         </div>
                     
@@ -128,13 +121,9 @@
         </footer>
     </div>
 
-    <!-- Основной flatpickr -->
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr" defer></script>
-    <!-- Русская локализация -->
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ru.js" defer></script>
     <!-- Telegram -->
     <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
-    <!-- Скрипт -->
+    <!-- Основной скрипт -->
     <script src="script.js" defer></script>
 </body>
 </html>
