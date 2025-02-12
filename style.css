@@ -1,6 +1,7 @@
 :root {
     --transition-theme: background-color 0.3s ease, color 0.3s ease;
     --icon-color: #2c3e50;
+    --highlight-color: var(--color-hover);
 
     /* Основные цвета */
     --color-primary: #0088cc;
@@ -285,4 +286,76 @@ canvas {
 
 .is-telegram .calendar {
     background: var(--tg-theme-bg-color, var(--color-background));
+}
+
+/* Новые определения для более современного вида календаря */
+.custom-calendar {
+    position: absolute;
+    background: var(--color-surface, #f8f8f8);
+    border: 1px solid var(--color-border, #ccc);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    overflow: hidden;
+    transform: scaleY(0);
+    transform-origin: top;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    opacity: 0;
+    z-index: 1000;
+    min-width: 280px;
+    font-family: sans-serif;
+}
+.custom-calendar.open {
+    transform: scaleY(1);
+    opacity: 1;
+    display: block;
+}
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--color-background, #ffffff);
+    border-bottom: 1px solid var(--color-border, #ccc);
+    padding: 8px;
+}
+.calendar-header select {
+    background: transparent;
+    border: none;
+    font-size: 14px;
+    color: var(--text-color, #333);
+    cursor: pointer;
+    outline: none;
+}
+.calendar-days, .calendar-dates {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+}
+.calendar-days .day-name {
+    padding: 6px 0;
+    font-size: 12px;
+    background: var(--color-surface, #f8f8f8);
+    border-bottom: 1px solid var(--color-border, #ccc);
+}
+.calendar-dates {
+    padding: 8px;
+    gap: 4px;
+}
+.calendar-dates .calendar-date {
+    padding: 6px 0;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.1s, color 0.1s;
+}
+.calendar-dates .calendar-date:hover {
+    background: var(--color-hover, #007acc);
+    color: #fff;
+}
+.calendar-dates .calendar-date.empty {
+    cursor: default;
+    background: transparent;
+}
+.calendar-dates .calendar-date.highlight {
+    background: var(--color-hover, #007acc);
+    color: #fff;
 }

@@ -498,44 +498,48 @@ function isValidDate(dateString) {
 function initializeDatePicker() {
     const birthdateInput = document.getElementById('birthdate-input');
     const lang = document.documentElement.lang || 'ru';
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    
-    if (isMobile) {
-        // На мобильном используем нативный date‑picker без изменения значения
-        birthdateInput.type = "date";
-        birthdateInput.readOnly = true;
-        
-        birthdateInput.addEventListener('change', function() {
-            // Используем нативное ISO‑значение (yyyy-MM-dd)
-            if (birthdateInput.value) {
-                generateLifeCalendar();
-            }
-        });
-    } else {
-        // На ПК используем тип "text" с автоматическим форматом DD.MM.ГГГГ
-        birthdateInput.type = "text";
-        birthdateInput.placeholder = lang === 'ru' ? 'ДД.ММ.ГГГГ' : 'DD.MM.YYYY';
-        
-        birthdateInput.addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            let formattedValue = '';
-            if (value.length > 0) {
-                formattedValue = value.slice(0, 2);
-                if (value.length > 2) {
-                    formattedValue += '.' + value.slice(2, 4);
-                    if (value.length > 4) {
-                        formattedValue += '.' + value.slice(4, 8);
-                    }
-                }
-            }
-            e.target.value = formattedValue;
-            
-            // Если введено полное значение (10 символов), обновляем календарь
-            if (formattedValue.length === 10) {
-                generateLifeCalendar();
-            }
-        });
+    // Используем тип "text" для работы с нашим календарём и автозаполнением
+    birthdateInput.type = "text";
+    birthdateInput.placeholder = lang === 'ru' ? 'ДД.ММ.ГГГГ' : 'DD.MM.YYYY';
+
+    // Если отсутствует элемент для вывода ошибок, создаём его
+    let errorElem = document.getElementById('birthdate-error');
+    if (!errorElem) {
+        errorElem = document.createElement('div');
+        errorElem.id = 'birthdate-error';
+        errorElem.style.color = '#ff4444';
+        errorElem.style.fontSize = '12px';
+        errorElem.style.marginTop = '4px';
+        birthdateInput.parentNode.appendChild(errorElem);
     }
+
+    birthdateInput.addEventListener('input', formatBirthdateInput);
+
+    // При потере фокуса проверяем корректность ввода и выводим ошибку (без alert)
+    birthdateInput.addEventListener('blur', function(e) {
+        if (e.target.value && !isValidDate(e.target.value)) {
+            errorElem.textContent = lang === 'ru'
+                ? 'Введите корректную дату в формате ДД.ММ.ГГГГ'
+                : 'Enter a valid date in DD.MM.YYYY format';
+            e.target.classList.add('error');
+        } else {
+            errorElem.textContent = '';
+            e.target.classList.remove('error');
+        }
+    });
+
+    // При фокусе показываем наш кастомный календарь
+    birthdateInput.addEventListener('focus', function() {
+        showCustomCalendar(birthdateInput);
+    });
+
+    // При клике вне календаря – скрываем его
+    document.addEventListener('click', function(event) {
+        const calendar = document.getElementById('custom-calendar');
+        if (calendar && !calendar.contains(event.target) && event.target !== birthdateInput) {
+            hideCustomCalendar();
+        }
+    });
 }
 
 // Добавляем небольшой стиль для индикации ошибки в поле ввода
@@ -559,4 +563,327 @@ function debounce(func, wait) {
         clearTimeout(timeout);
         timeout = setTimeout(later, wait);
     };
+}
+
+// Функция показа кастомного календаря под элементом ввода
+function showCustomCalendar(inputElement) {
+    let calendar = document.getElementById('custom-calendar');
+    if (!calendar) {
+        calendar = document.createElement('div');
+        calendar.id = 'custom-calendar';
+        calendar.className = 'custom-calendar';
+        // Структура календаря: header с селектами и контейнер для дат
+        calendar.innerHTML = `
+            <div class="calendar-header">
+                <select id="calendar-month-select"></select>
+                <select id="calendar-year-select"></select>
+            </div>
+            <div class="calendar-days"></div>
+            <div class="calendar-dates"></div>
+        `;
+        document.body.appendChild(calendar);
+
+        // Заполняем заголовок (дни недели)
+        const dayNames = document.documentElement.lang === 'ru'
+            ? ['Вс','Пн','Вт','Ср','Чт','Пт','Сб']
+            : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+        const daysContainer = calendar.querySelector('.calendar-days');
+        daysContainer.innerHTML = dayNames.map(day => `<div class="day-name">${day}</div>`).join('');
+
+        // События для селектов – обновляем только сетку дат при изменении
+        const monthSelect = calendar.querySelector('#calendar-month-select');
+        const yearSelect = calendar.querySelector('#calendar-year-select');
+        monthSelect.addEventListener('change', function() {
+            updateCalendarDates(calendar, parseInt(yearSelect.value, 10), parseInt(monthSelect.value, 10));
+            updateCalendarHighlight(inputElement, calendar);
+        });
+        yearSelect.addEventListener('change', function() {
+            updateCalendarDates(calendar, parseInt(yearSelect.value, 10), parseInt(monthSelect.value, 10));
+            updateCalendarHighlight(inputElement, calendar);
+        });
+    }
+    // Используем введённую дату или текущую, чтобы задать выбранный месяц/год
+    let currentDate = new Date();
+    if (isValidDate(inputElement.value)) {
+        currentDate = new Date(formatDate(inputElement.value));
+    }
+    populateSelectors(calendar, currentDate.getFullYear(), currentDate.getMonth());
+    updateCalendarDates(calendar, currentDate.getFullYear(), currentDate.getMonth());
+    updateCalendarHighlight(inputElement, calendar);
+
+    // Располагаем календарь под полем ввода
+    const rect = inputElement.getBoundingClientRect();
+    calendar.style.top = (rect.bottom + window.scrollY) + 'px';
+    calendar.style.left = (rect.left + window.scrollX) + 'px';
+    calendar.style.display = 'block';
+    requestAnimationFrame(() => {
+        calendar.classList.add('open');
+    });
+}
+
+// Функция скрытия календаря
+function hideCustomCalendar() {
+    const calendar = document.getElementById('custom-calendar');
+    if (calendar) {
+        calendar.classList.remove('open');
+        setTimeout(() => {
+            calendar.style.display = 'none';
+        }, 300);
+    }
+}
+// Построение календаря для указанного месяца/года
+function buildCalendar(calendar, date, inputElement) {
+    const selectedMonth = date.getMonth();
+    const selectedYear = date.getFullYear();
+
+    // Строим заголовок с селектами для месяца и года
+    let headerHtml = '<div class="calendar-header">';
+    headerHtml += '<select id="calendar-month-select"></select>';
+    headerHtml += '<select id="calendar-year-select"></select>';
+    headerHtml += '</div>';
+
+    // Заголовок с названиями дней недели
+    const dayNames = document.documentElement.lang === 'ru'
+        ? ['Вс','Пн','Вт','Ср','Чт','Пт','Сб']
+        : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    let daysHtml = '<div class="calendar-days">';
+    for (let d of dayNames) {
+        daysHtml += `<div class="day-name">${d}</div>`;
+    }
+    daysHtml += '</div>';
+
+    // Сетка дат
+    let datesHtml = '<div class="calendar-dates">';
+    // Определяем первый день месяца
+    const firstDay = new Date(selectedYear, selectedMonth, 1);
+    const startingDay = firstDay.getDay(); // 0–6
+    const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
+    // Пустые ячейки до первого дня месяца
+    for (let i = 0; i < startingDay; i++) {
+        datesHtml += '<div class="calendar-date empty"></div>';
+    }
+    // Дни месяца
+    for (let d = 1; d <= daysInMonth; d++) {
+        datesHtml += `<div class="calendar-date" data-day="${d}">${d}</div>`;
+    }
+    datesHtml += '</div>';
+
+    calendar.innerHTML = headerHtml + daysHtml + datesHtml;
+
+    // Заполняем селект месяца
+    const monthSelect = calendar.querySelector('#calendar-month-select');
+    for (let m = 0; m < 12; m++) {
+        const option = document.createElement('option');
+        option.value = m;
+        option.textContent = getMonthName(m);
+        if (m === selectedMonth) { option.selected = true; }
+        monthSelect.appendChild(option);
+    }
+    // Заполняем селект года (от 1900 до текущего года)
+    const yearSelect = calendar.querySelector('#calendar-year-select');
+    const currentYear = new Date().getFullYear();
+    for (let y = 1900; y <= currentYear; y++) {
+        const option = document.createElement('option');
+        option.value = y;
+        option.textContent = y;
+        if (y === selectedYear) { option.selected = true; }
+        yearSelect.appendChild(option);
+    }
+    // При изменении месяца/года пересоздаём календарь с новым выбором
+    monthSelect.addEventListener('change', function(e) {
+        const newMonth = parseInt(e.target.value, 10);
+        const newYear = parseInt(yearSelect.value, 10);
+        const newDate = new Date(newYear, newMonth, 1);
+        buildCalendar(calendar, newDate, inputElement);
+        updateCalendarHighlight(inputElement, calendar);
+    });
+    yearSelect.addEventListener('change', function(e) {
+        const newYear = parseInt(e.target.value, 10);
+        const newMonth = parseInt(monthSelect.value, 10);
+        const newDate = new Date(newYear, newMonth, 1);
+        buildCalendar(calendar, newDate, inputElement);
+        updateCalendarHighlight(inputElement, calendar);
+    });
+
+    // Добавляем обработку выбора дня
+    const dateCells = calendar.querySelectorAll('.calendar-date:not(.empty)');
+    dateCells.forEach(cell => {
+        cell.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const selectedDay = parseInt(this.getAttribute('data-day'), 10);
+            const newYear = parseInt(yearSelect.value, 10);
+            const newMonth = parseInt(monthSelect.value, 10);
+            const constructedDate = new Date(newYear, newMonth, selectedDay);
+            inputElement.value = formatCustomDate(constructedDate);
+            hideCustomCalendar();
+            generateLifeCalendar();
+        });
+    });
+
+    // После построения выделяем выбранный день (если введён в поле)
+    updateCalendarHighlight(inputElement, calendar);
+}
+
+// Возвращает название месяца для выбранного языка
+function getMonthName(monthIndex) {
+    const lang = document.documentElement.lang || 'ru';
+    const months = lang === 'ru'
+        ? ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь']
+        : ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    return months[monthIndex];
+}
+
+// Форматирует дату в строку dd.mm.yyyy
+function formatCustomDate(date) {
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}.${month}.${year}`;
+}
+
+function updateCalendarHighlight(inputElement, calendar) {
+    // Снимаем ранее выделенные ячейки
+    calendar.querySelectorAll('.calendar-date.highlight').forEach(cell => {
+        cell.classList.remove('highlight');
+    });
+    if (!inputElement.value) return;
+    const parts = inputElement.value.split('.');
+    
+    // Выделяем ячейку дня, если введено 2 цифры
+    if (parts[0] && parts[0].length === 2) {
+        const dayNumber = parseInt(parts[0], 10);
+        if (!isNaN(dayNumber)) {
+            const cell = calendar.querySelector(`.calendar-date[data-day="${dayNumber}"]`);
+            if (cell) cell.classList.add('highlight');
+        }
+    }
+    
+    // Обновляем селектор месяца без перестройки календаря
+    const monthSelect = calendar.querySelector('#calendar-month-select');
+    if (parts[1] && parts[1].length === 2) {
+        const monthNumber = parseInt(parts[1], 10);
+        if (!isNaN(monthNumber) && monthNumber >= 1 && monthNumber <= 12 && monthSelect) {
+            monthSelect.value = monthNumber - 1;
+        }
+    }
+    
+    // Обновляем селектор года без перестройки календаря
+    const yearSelect = calendar.querySelector('#calendar-year-select');
+    if (parts[2] && parts[2].length === 4 && yearSelect) {
+        const yearNumber = parseInt(parts[2], 10);
+        if (!isNaN(yearNumber)) {
+            yearSelect.value = yearNumber;
+        }
+    }
+}
+
+// Заполняет селекторы месяца и года (год – от 1900 до текущего года)
+function populateSelectors(calendar, selectedYear, selectedMonth) {
+    const monthSelect = calendar.querySelector('#calendar-month-select');
+    const yearSelect = calendar.querySelector('#calendar-year-select');
+    // Заполняем месяц, если ещё не заполнен или требуется обновление
+    if (!monthSelect.childElementCount) {
+        for (let m = 0; m < 12; m++) {
+            const option = document.createElement('option');
+            option.value = m;
+            option.textContent = getMonthName(m);
+            monthSelect.appendChild(option);
+        }
+    }
+    monthSelect.value = selectedMonth;
+
+    // Заполняем год
+    const currentYear = new Date().getFullYear();
+    yearSelect.innerHTML = '';
+    for (let y = 1900; y <= currentYear; y++) {
+        const option = document.createElement('option');
+        option.value = y;
+        option.textContent = y;
+        yearSelect.appendChild(option);
+    }
+    yearSelect.value = selectedYear;
+}
+
+function formatBirthdateInput(e) {
+    const input = e.target;
+    // Оставляем только цифры и ограничиваем до 8 символов (ДДММГГГГ)
+    let digits = input.value.replace(/\D/g, '');
+    if (digits.length > 8) digits = digits.slice(0, 8);
+
+    let formatted = '';
+    const day = digits.slice(0, 2);
+    let month = digits.slice(2, 4);
+    const year = digits.slice(4, 8);
+
+    // Добавляем день
+    formatted += day;
+
+    // Если есть хотя бы одна цифра для месяца – добавляем разделитель
+    if (digits.length > 2) {
+        formatted += '.';
+
+        // Если введена только одна цифра для месяца и это не операция удаления
+        if (month.length === 1 && (!e.inputType || !e.inputType.startsWith('delete'))) {
+            if (month === "0") {
+                // Если введён "0", оставляем как есть
+            } else if (parseInt(month, 10) >= 2 && parseInt(month, 10) <= 9) {
+                // Если введена цифра от 2 до 9, дополняем ведущим нулём
+                month = '0' + month;
+            }
+            // Если цифра равна "1", оставляем для возможности ввода 10-12
+        }
+        formatted += month;
+    }
+
+    // Если есть цифры для года – добавляем разделитель и год
+    if (digits.length > 4) {
+        formatted += '.';
+        formatted += year;
+    }
+
+    input.value = formatted;
+
+    // Если календарь открыт – обновляем выделение
+    const calendar = document.getElementById('custom-calendar');
+    if (calendar && calendar.style.display === 'block') {
+        updateCalendarHighlight(input, calendar);
+    }
+
+    // Если введён полный формат (8 цифр => DD.MM.YYYY), автоматически строим календарь
+    if (digits.length === 8) {
+        generateLifeCalendar();
+    }
+}
+
+function updateCalendarDates(calendar, year, month) {
+    const datesContainer = calendar.querySelector('.calendar-dates');
+    datesContainer.innerHTML = '';
+    const firstDay = new Date(year, month, 1);
+    const startingDay = firstDay.getDay(); // 0–6, где 0 = воскресенье
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    
+    // Добавляем пустые ячейки до первого дня месяца
+    for (let i = 0; i < startingDay; i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'calendar-date empty';
+        datesContainer.appendChild(emptyCell);
+    }
+    
+    // Добавляем ячейки с числами месяца
+    for (let d = 1; d <= daysInMonth; d++) {
+        const cell = document.createElement('div');
+        cell.className = 'calendar-date';
+        cell.dataset.day = d;
+        cell.textContent = d;
+        cell.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const monthSelect = calendar.querySelector('#calendar-month-select');
+            const yearSelect = calendar.querySelector('#calendar-year-select');
+            const newDate = new Date(parseInt(yearSelect.value, 10), parseInt(monthSelect.value, 10), d);
+            document.getElementById('birthdate-input').value = formatCustomDate(newDate);
+            hideCustomCalendar();
+            generateLifeCalendar();
+        });
+        datesContainer.appendChild(cell);
+    }
 }
