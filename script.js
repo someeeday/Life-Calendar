@@ -1,239 +1,135 @@
-// Функция смены языка
-function changeLanguage(lang) {
-    // Обновляем переводы на странице
-    document.querySelectorAll('[data-text-' + lang + ']').forEach(element => {
-        const translation = element.getAttribute('data-text-' + lang);
-        if (translation && element.id !== 'lang-select') {
-            element.textContent = translation;
-        }
-    });
-    
-    // Обновляем placeholder для даты в зависимости от языка
-    const birthdateInput = document.getElementById('birthdate-input');
-    if (birthdateInput) {
-        birthdateInput.placeholder = lang === 'ru' ? 'ДД.ММ.ГГГГ' : 'DD.MM.YYYY';
-        // Убираем обновление flatpickr, так как он больше не используется
+// Конфигурация переводов
+const translations = {
+    ru: {
+        age: '← Возраст',
+        weeks: 'Недели года →',
+        language: 'Язык',
+        theme: 'Тема',
+        birthdate: 'Дата рождения',
+        light: 'Светлая',
+        dark: 'Тёмная',
+        createCalendar: 'Создать календарь',
+        datePlaceholder: 'ДД.ММ.ГГГГ',
+        invalidDate: 'Введите корректную дату в формате ДД.ММ.ГГГ',
+        errorCreating: 'Ошибка при создании календаря',
+        confirmOldAge: 'Возраст превышает 90 лет',
+        months: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 
+                'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
+        weekDays: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
+    },
+    en: {
+        age: '← Age',
+        weeks: 'Weeks of Year →',
+        language: 'Language',
+        theme: 'Theme',
+        birthdate: 'Birth Date',
+        light: 'Light',
+        dark: 'Dark',
+        createCalendar: 'Create Calendar',
+        datePlaceholder: 'DD.MM.YYYY',
+        invalidDate: 'Enter a valid date in DD.MM.YYYY format',
+        errorCreating: 'Error creating calendar',
+        confirmOldAge: 'Age exceeds 90 years',
+        months: ['January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'],
+        weekDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
     }
+};
+
+// Основные цветовые схемы
+const darkThemeColors = {
+    background: '#0f172a',
+    text: '#f1f5f9',
+    grid: '#334155',
+    lived: '#3b82f6',
+    future: '#1e293b'
+};
+
+const lightThemeColors = {
+    background: '#ffffff',
+    text: '#0f172a',
+    grid: '#e2e8f0',
+    lived: '#2563eb', 
+    future: '#f1f5f9'
+};
+
+// Получение текущей темы
+function getCurrentTheme() {
+    return document.documentElement.getAttribute('data-theme') || 'light';
+}
+
+// Получение текущего языка
+function getCurrentLanguage() {
+    return document.documentElement.lang || 'ru';
+}
+
+// Проверка корректности даты
+function isValidDate(dateString) {
+    if (!dateString) return false;
+    const parts = dateString.split('.');
+    if (parts.length !== 3) return false;
     
-    // Устанавливаем язык документа
-    document.documentElement.lang = lang;
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    const year = parseInt(parts[2], 10);
     
-    // Сохраняем настройки
-    const currentTheme = document.getElementById('theme-select').value;
-    const currentBirthdate = document.getElementById('birthdate-input').value;
-    saveSettings(lang, currentTheme, currentBirthdate);
+    if (isNaN(day) || isNaN(month) || isNaN(year)) return false;
+    if (year < 1900 || year > new Date().getFullYear()) return false;
+    if (month < 1 || month > 12) return false;
     
-    // Генерируем событие смены языка
-    document.dispatchEvent(new Event('languageChanged'));
+    const daysInMonth = new Date(year, month, 0).getDate();
+    if (day < 1 || day > daysInMonth) return false;
     
-    // Перерисовываем календарь если он уже был создан
-    if (currentBirthdate && document.querySelector('.calendar canvas') && document.querySelector('.calendar canvas').getContext('2d')) {
-        createLifeGrid(calculateLivedWeeks());
+    return new Date(year, month - 1, day) <= new Date();
+}
+
+// Функция для отображения ошибки
+function showError(message) {
+    const errorElement = document.getElementById('birthdate-error');
+    if (errorElement) {
+        errorElement.textContent = message;
+        errorElement.style.display = 'block';
     }
 }
 
-// Функция смены темы
-function applyTheme(theme) {
-    const root = document.documentElement;
-    root.setAttribute('data-theme', theme);
-    
-    if (window.Telegram?.WebApp) {
-        const tg = window.Telegram.WebApp;
-        root.style.setProperty('--background-color', tg.backgroundColor);
-        root.style.setProperty('--text-color', tg.textColor);
-    } else {
-        if (theme === 'dark') {
-            root.style.setProperty('--background-color', '#1c1c1c');
-            root.style.setProperty('--text-color', '#ffffff');
-            root.style.setProperty('--container-background-color', '#2c2c2c');
-            root.style.setProperty('--container-text-color', '#ffffff');
-            root.style.setProperty('--button-background-color', '#0088cc');
-            root.style.setProperty('--button-text-color', '#ffffff');
-            root.style.setProperty('--canvas-border-color', '#444');
-            root.style.setProperty('--grid-color', '#333333');
-            root.style.setProperty('--lived-weeks-color', '#4285f4');
-            root.style.setProperty('--future-weeks-color', '#2c2c2c');
-        } else {
-            root.style.setProperty('--background-color', '#ffffff');
-            root.style.setProperty('--text-color', '#000000');
-            root.style.setProperty('--container-background-color', '#ffffff');
-            root.style.setProperty('--container-text-color', '#000000');
-            root.style.setProperty('--button-background-color', '#0088cc');
-            root.style.setProperty('--button-text-color', '#ffffff');
-            root.style.setProperty('--canvas-border-color', '#ccc');
-            root.style.setProperty('--grid-color', '#e0e0e0');
-            root.style.setProperty('--lived-weeks-color', '#3498db');
-            root.style.setProperty('--future-weeks-color', '#f0f0f0');
-        }
+// Функция для скрытия ошибки
+function hideError() {
+    const errorElement = document.getElementById('birthdate-error');
+    if (errorElement) {
+        errorElement.style.display = 'none';
     }
-    
-    // Сохраняем настройки
-    saveSettings(
-        document.getElementById('lang-select').value,
-        theme,
-        document.getElementById('birthdate-input').value
-    );
-
-    // Перерисовываем календарь
-    createLifeGrid(calculateLivedWeeks());
 }
 
-// Основная инициализация
-document.addEventListener('DOMContentLoaded', async function() {
-    initializeDatePicker();
-    const tg = window.Telegram?.WebApp;
+// Форматирование ввода даты
+document.getElementById('birthdate-input')?.addEventListener('input', function(e) {
+    hideError(); // Скрываем ошибку при вводе
+    let value = e.target.value.replace(/\D/g, '');
+    let formatted = '';
     
-    // Корректное определение Telegram Web App
-    const isTelegram = Boolean(
-        tg && 
-        tg.platform !== "unknown" && 
-        tg.initDataUnsafe?.user && // проверяем наличие данных пользователя
-        window.navigator.userAgent.includes('TelegramWebApp')
-    );
+    if (value.length > 0) formatted += value.slice(0, 2);
+    if (value.length > 2) {
+        let month = value.slice(2, 4);
+        if (month.length === 1 && month >= '2' && month <= '9') {
+            month = '0' + month;
+        }
+        formatted += '.' + month;
+    }
+    if (value.length > 4) formatted += '.' + value.slice(4, 8);
     
-    // Определение мобильного устройства без привязки к размеру окна
-    const isMobile = /iPhone|iPad|iPod|Android|Mobile|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-    // Отладочная информация
-    console.log('Environment Debug:', {
-        isTelegram,
-        isMobile,
-        platform: {
-            telegram: tg?.platform || 'unknown',
-            browser: navigator.platform,
-            webView: window.navigator.userAgent.includes('TelegramWebApp') ? 'Telegram' : 'Browser'
-        },
-        viewport: {
-            width: window.innerWidth,
-            height: window.innerHeight
-        },
-        initData: tg?.initDataUnsafe?.user ? 'authorized' : 'unauthorized',
-        url: window.location.href
-    });
-
-    // Применяем классы и инициализируем интерфейс
-    document.body.classList.toggle('is-mobile', isMobile);
-    document.body.classList.toggle('is-telegram', isTelegram);
-
-    if (isTelegram) {
-        try {
-            await tg.ready();
-            tg.expand();
-            
-            // Настраиваем кнопку Telegram
-            tg.MainButton.setParams({
-                text: document.documentElement.lang === 'ru' ? 'Создать календарь' : 'Create calendar',
-                color: '#0088cc',
-                text_color: '#ffffff',
-                is_active: true,
-                is_visible: true
-            });
-            tg.MainButton.onClick(generateLifeCalendar);
-            tg.MainButton.show();
-        } catch (error) {
-            console.error('Telegram initialization failed:', error);
-            document.body.classList.remove('is-telegram');
-        }
-
-        try {
-            // Загружаем настройки из CloudStorage
-            const cloudSettings = await tg.CloudStorage.getItems(['settings']);
-            if (cloudSettings.settings) {
-                const settings = JSON.parse(cloudSettings.settings);
-                
-                // Применяем настройки из CloudStorage если нет в куках
-                if (settings.lang && !getCookie('lang-select')) {
-                    document.getElementById('lang-select').value = settings.lang;
-                    changeLanguage(settings.lang);
-                }
-                if (settings.theme && !getCookie('theme-select')) {
-                    document.getElementById('theme-select').value = settings.theme;
-                    applyTheme(settings.theme);
-                }
-                if (settings.birthdate && !getCookie('birthdate-input')) {
-                    document.getElementById('birthdate-input').value = settings.birthdate;
-                    generateLifeCalendar();
-                }
-            }
-            
-            // Запрашиваем данные пользователя
-            try {
-                const userDataResult = await tg.requestUser();
-                if (userDataResult && !getCookie('lang-select')) {
-                    const userLang = userDataResult.language_code?.startsWith('ru') ? 'ru' : 'en';
-                    document.getElementById('lang-select').value = userLang;
-                    changeLanguage(userLang);
-                }
-            } catch (error) {
-                console.log('User data access denied or error');
-            }
-        } catch (error) {
-            console.log('Error loading Telegram settings');
-        }
-    }
-
-    // Для десктопных устройств (не мобильных) добавляем событие на изменение поля даты
-    if (!isMobile) {
-        const birthdateInput = document.getElementById('birthdate-input');
-        birthdateInput.addEventListener('change', function() {
-            generateLifeCalendar();
-        });
-    }
-
-    // Восстанавливаем настройки из всех источников с приоритетами
-    const savedLang = getCookie('lang-select') || 
-                     localStorage.getItem('lang-select') ||
-                     (tg?.initDataUnsafe?.user?.language_code?.startsWith('ru') ? 'ru' : 'en') ||
-                     (navigator.language.startsWith('ru') ? 'ru' : 'en');
-    
-    const savedTheme = getCookie('theme-select') || 
-                      localStorage.getItem('theme-select') ||
-                      (tg ? tg.colorScheme : null) ||
-                      (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-    
-    const savedBirthdate = getCookie('birthdate-input') || 
-                          localStorage.getItem('birthdate-input');
-
-    if (savedLang) {
-        document.getElementById('lang-select').value = savedLang;
-        changeLanguage(savedLang);
-    }
-
-    if (savedTheme) {
-        document.getElementById('theme-select').value = savedTheme;
-        applyTheme(savedTheme);
-    }
-
-    if (savedBirthdate) {
-        document.getElementById('birthdate-input').value = savedBirthdate;
-        generateLifeCalendar();
-    } else {
-        createLifeGrid();
-    }
-
-    // Добавляем слушатели событий формы
-    document.querySelector('form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        generateLifeCalendar();
-    });
-
-    document.getElementById('birthdate-input').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            generateLifeCalendar();
-        }
-    });
-
-    window.addEventListener('resize', debounce(function() {
-        if (document.getElementById('birthdate-input').value) {
-            generateLifeCalendar();
-        } else {
-            createLifeGrid();
-        }
-    }, 250));
+    e.target.value = formatted;
 });
 
-// Функция отрисовки календаря жизни
+// Вычисление прожитых недель
+function calculateLivedWeeks(birthdate) {
+    if (!birthdate || !isValidDate(birthdate)) return 0;
+    
+    const parts = birthdate.split('.');
+    const birthDate = new Date(parts[2], parts[1] - 1, parts[0]);
+    const currentDate = new Date();
+    return Math.floor((currentDate - birthDate) / (1000 * 60 * 60 * 24 * 7));
+}
+
+// Отрисовка календаря жизни
 function createLifeGrid(livedWeeks = 0, totalYears = 91) {
     const weeksPerYear = 52;
     const canvas = document.getElementById('lifeCanvas');
@@ -262,20 +158,8 @@ function createLifeGrid(livedWeeks = 0, totalYears = 91) {
     ctx.scale(scale, scale);
     
     // Получаем текущую тему
-    const theme = document.documentElement.getAttribute('data-theme') || 'light';
-    const colors = theme === 'dark' ? {
-        background: '#1c1c1c',
-        text: '#ffffff',
-        grid: '#333333',
-        lived: '#1a73e8',
-        future: '#2c2c2c'
-    } : {
-        background: '#ffffff',
-        text: '#000000',
-        grid: '#e0e0e0',
-        lived: '#0088cc',
-        future: '#f0f0f0'
-    };
+    const theme = getCurrentTheme();
+    const colors = theme === 'dark' ? darkThemeColors : lightThemeColors;
     
     // Очищаем canvas
     ctx.fillStyle = colors.background;
@@ -288,21 +172,18 @@ function createLifeGrid(livedWeeks = 0, totalYears = 91) {
     ctx.textAlign = 'center';
     
     // Подписи для недель и возраста
-    const lang = document.documentElement.lang || 'ru';
-    const labels = {
-        ru: { age: '← Возраст', weeks: 'Недели года →' },
-        en: { age: '← Age', weeks: 'Weeks of the Year →' }
-    };
+    const lang = getCurrentLanguage();
+    const labels = translations[lang];
     
     ctx.textAlign = 'left';
-    ctx.fillText(labels[lang].weeks, padding, padding - 45);
+    ctx.fillText(labels.weeks, padding, padding - 45);
     
     const ageTextPosition = 0;
     ctx.save();
     ctx.translate(padding - 45, padding + ageTextPosition);
     ctx.rotate(-Math.PI / 2);
     ctx.textAlign = 'right';
-    ctx.fillText(labels[lang].age, 0, 0);
+    ctx.fillText(labels.age, 0, 0);
     ctx.restore();
 
     ctx.textAlign = 'center';
@@ -347,561 +228,277 @@ function createLifeGrid(livedWeeks = 0, totalYears = 91) {
     }
 }
 
-// Генерация календаря жизни по введённой дате
-function generateLifeCalendar() {
-    const birthdateInput = document.getElementById('birthdate-input');
-    if (!birthdateInput) {
-        console.error('Birthdate input not found');
-        return;
-    }
-    
-    const birthdate = birthdateInput.value;
-    
-    if (!birthdate || !isValidDate(birthdate)) {
-        alert(document.documentElement.lang === 'ru' ? 
-            'Пожалуйста, введите корректную дату рождения в формате DD.MM.YYYY' : 
-            'Please enter a valid birth date in DD.MM.YYYY format');
-        return;
-    }
-    
-    try {
-        const formattedBirthdate = formatDate(birthdate);
-        if (!formattedBirthdate) {
-            throw new Error('Invalid date format');
-        }
-        
-        const birthDate = new Date(formattedBirthdate);
-        const currentDate = new Date();
-        
-        const ageInMilliseconds = currentDate - birthDate;
-        const ageInYears = ageInMilliseconds / (1000 * 60 * 60 * 24 * 365.25);
-        
-        if (ageInYears > 90) {
-            const confirmMessage = document.documentElement.lang === 'ru' ? 
-                'Возраст превышает 90 лет. Отобразить полностью заполненный календарь?' : 
-                'Age exceeds 90 years. Show fully filled calendar?';
-            
-            if (!confirm(confirmMessage)) {
-                return;
-            }
-        }
-        
-        const livedWeeks = Math.floor(ageInMilliseconds / (1000 * 60 * 60 * 24 * 7));
-        
-        // Сохраняем дату
-        setCookie('birthdate-input', birthdate, 365);
-        saveSettings(
-            document.getElementById('lang-select').value,
-            document.getElementById('theme-select').value,
-            birthdate
-        );
-        
-        createLifeGrid(Math.min(livedWeeks, 91 * 52));
-        
-    } catch (error) {
-        console.error('Error generating calendar:', error);
-        alert(document.documentElement.lang === 'ru' ? 
-            'Ошибка при создании календаря.' : 
-            'Error creating calendar.');
-    }
-}
+// Обработчик формы
+document.getElementById('settingsForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+});
 
-// Работа с куками
-function setCookie(name, value, days) {
-    const expires = new Date();
-    expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
-    document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
-}
+// Инициализация пустого календаря
+document.addEventListener('DOMContentLoaded', () => createLifeGrid(0));
 
-function getCookie(name) {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop().split(';').shift();
-    return '';
-}
-
-function saveSettings(lang, theme, birthdate) {
-    try {
-        setCookie('lang-select', lang, 365);
-        setCookie('theme-select', theme, 365);
-        if (birthdate) {
-            setCookie('birthdate-input', birthdate, 365);
-        }
-        localStorage.setItem('lang-select', lang);
-        localStorage.setItem('theme-select', theme);
-        if (birthdate) {
-            localStorage.setItem('birthdate-input', birthdate);
-        }
-    } catch (error) {
-        console.error('Error saving settings:', error);
-    }
-}
-
-// Преобразование даты: из DD.MM.YYYY в ISO (YYYY-MM-DD)
-function formatDate(dateString) {
-    if (!dateString) return '';
-    // Если значение в ISO формате (YYYY-MM-DD), возвращаем как есть
-    if (dateString.includes('-')) {
-        return dateString;
-    }
-    // Ожидаем формат DD.MM.YYYY
-    const parts = dateString.split('.');
-    if (parts.length !== 3) return '';
-    const day = parts[0].padStart(2, '0');
-    const month = parts[1].padStart(2, '0');
-    const year = parts[2];
-    return `${year}-${month}-${day}`;
-}
-
-// Вычисление количества прожитых недель
-function calculateLivedWeeks() {
+// Функция смены языка
+function changeLanguage(lang) {
+    document.documentElement.lang = lang;
+    const elements = document.querySelectorAll('[data-text-ru], [data-text-en]');
+    elements.forEach(el => {
+        el.textContent = el.getAttribute(`data-text-${lang}`);
+    });
+    document.getElementById('birthdate-input').placeholder = translations[lang].datePlaceholder;
+    // Сохраняем текущее значение даты
     const birthdate = document.getElementById('birthdate-input').value;
-    if (!birthdate || !isValidDate(birthdate)) return 0;
-    
-    try {
-        const formattedBirthdate = formatDate(birthdate);
-        const birthDate = new Date(formattedBirthdate);
-        const currentDate = new Date();
-        return Math.floor((currentDate - birthDate) / (1000 * 60 * 60 * 24 * 7));
-    } catch (error) {
-        console.error('Error calculating lived weeks:', error);
-        return 0;
-    }
-}
-
-// Проверка корректности даты
-function isValidDate(dateString) {
-    if (!dateString) return false;
-    let date;
-    if (dateString.includes('.')) {
-        const parts = dateString.split('.');
-        if (parts.length !== 3) return false;
-        const day = parseInt(parts[0], 10);
-        const month = parseInt(parts[1], 10);
-        const year = parseInt(parts[2], 10);
-        if (isNaN(day) || isNaN(month) || isNaN(year)) return false;
-        if (year < 1900 || year > new Date().getFullYear()) return false;
-        const daysInMonth = new Date(year, month, 0).getDate();
-        if (day < 1 || day > daysInMonth) return false;
-        date = new Date(year, month - 1, day);
-    } else if (dateString.includes('-')) {
-        date = new Date(dateString);
-        if (isNaN(date)) return false;
+    const parts = birthdate.split('.');
+    const day = parts[0];
+    const month = parts[1];
+    const year = parts[2];
+    // Обновляем текст в календаре
+    buildCalendar();
+    if (birthdate && isValidDate(birthdate)) {
+        document.getElementById('birthdate-input').value = birthdate;
+        document.getElementById('calendar-month').value = parseInt(month) - 1;
+        document.getElementById('calendar-year').value = year;
+        highlightSelectedDate(birthdate);
     } else {
-        return false;
-    }
-    if (date > new Date()) return false;
-    return true;
-}
-
-function hideCalendarIfNotHovered() {
-    const calendar = document.getElementById('custom-calendar');
-    const container = document.querySelector('.date-input-container');
-    if (!calendar || !container) return;
-    if (!calendar.matches(':hover') && !container.matches(':hover')) {
-        hideCustomCalendar();
+        createLifeGrid(0);
     }
 }
 
-// Инициализация выбора даты
-function initializeDatePicker() {
-    const birthdateInput = document.getElementById('birthdate-input');
-    const lang = document.documentElement.lang || 'ru';
-    birthdateInput.type = "text";
-    birthdateInput.placeholder = lang === 'ru' ? 'ДД.ММ.ГГГГ' : 'DD.MM.YYYY';
-
-    let errorElem = document.getElementById('birthdate-error');
-    if (!errorElem) {
-        errorElem = document.createElement('div');
-        errorElem.id = 'birthdate-error';
-        errorElem.style.color = '#ff4444';
-        errorElem.style.fontSize = '12px';
-        errorElem.style.marginTop = '4px';
-        birthdateInput.parentNode.appendChild(errorElem);
+// Функция применения темы
+function changeTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    const colors = theme === 'dark' ? darkThemeColors : lightThemeColors;
+    Object.entries(colors).forEach(([key, value]) => {
+        document.documentElement.style.setProperty(`--${key}-color`, value);
+    });
+    // Перерисовываем календарь жизни при смене темы
+    const birthdate = document.getElementById('birthdate-input').value;
+    if (isValidDate(birthdate)) {
+        const livedWeeks = calculateLivedWeeks(birthdate);
+        createLifeGrid(livedWeeks);
+    } else {
+        createLifeGrid(0);
     }
+}
 
-    birthdateInput.addEventListener('input', formatBirthdateInput);
+// Инициализация темы и языка
+document.addEventListener('DOMContentLoaded', () => {
+    const savedTheme = localStorage.getItem('theme-select') || 'light';
+    const savedLang = localStorage.getItem('lang-select') || 'ru';
+    document.getElementById('theme-select').value = savedTheme;
+    document.getElementById('lang-select').value = savedLang;
+    changeTheme(savedTheme);
+    changeLanguage(savedLang);
+});
 
-    birthdateInput.addEventListener('blur', function(e) {
-        if (e.target.value && !isValidDate(e.target.value)) {
-            errorElem.textContent = lang === 'ru'
-                ? 'Введите корректную дату в формате ДД.ММ.ГГГГ'
-                : 'Enter a valid date in DD.MM.YYYY format';
-            e.target.classList.add('error');
-        } else {
-            errorElem.textContent = '';
-            e.target.classList.remove('error');
+// Функция для подтверждения возраста старше 90 лет
+function confirmOldAge() {
+    const lang = getCurrentLanguage();
+    showError(translations[lang].confirmOldAge);
+}
+
+// Функция генерации календаря жизни
+function generateLifeCalendar() {
+    const birthdate = document.getElementById('birthdate-input').value;
+    if (isValidDate(birthdate)) {
+        hideError(); // Скрываем ошибку при валидной дате
+        const livedWeeks = calculateLivedWeeks(birthdate);
+        const totalYears = 91;
+        const parts = birthdate.split('.');
+        const birthYear = parseInt(parts[2], 10);
+        const currentYear = new Date().getFullYear();
+        const age = currentYear - birthYear;
+
+        if (age > 90) {
+            confirmOldAge();
+            return;
         }
-    });
 
-    // Показываем календарь при фокусе
-    birthdateInput.addEventListener('focus', function() {
-        showCustomCalendar(birthdateInput);
-    });
-
-    // Открываем календарь при наведении на контейнер ввода
-    const dateContainer = document.querySelector('.date-input-container');
-    if (dateContainer) {
-        dateContainer.addEventListener('mouseenter', function() {
-            showCustomCalendar(birthdateInput);
-        });
-        dateContainer.addEventListener('mouseleave', hideCalendarIfNotHovered);
+        createLifeGrid(livedWeeks, totalYears);
+    } else {
+        showError(translations[getCurrentLanguage()].invalidDate); // Показываем ошибку при невалидной дате
     }
-
-    // Если клик вне календаря и поля – скрываем календарь
-    document.addEventListener('click', function(event) {
-        const calendar = document.getElementById('custom-calendar');
-        if (calendar && !calendar.contains(event.target) && event.target !== birthdateInput) {
-            hideCustomCalendar();
-        }
-    });
 }
 
-// Добавляем небольшой стиль для индикации ошибки в поле ввода
-const style = document.createElement('style');
-style.textContent = `
-    .form-input.error {
-        border-color: #ff4444;
-        background-color: rgba(255, 68, 68, 0.1);
-    }
-`;
-document.head.appendChild(style);
-
-// Функция debounce
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
-
-// Функция показа кастомного календаря под элементом ввода
-function showCustomCalendar(birthdateInput) {
-    let calendar = document.getElementById('custom-calendar');
-    if (!calendar) {
-        calendar = document.createElement('div');
-        calendar.id = 'custom-calendar';
-        calendar.className = 'custom-calendar';
-        calendar.innerHTML = `
-            <div class="calendar-header">
-                <select id="calendar-month-select"></select>
-                <select id="calendar-year-select"></select>
-            </div>
-            <div class="calendar-days"></div>
-            <div class="calendar-dates"></div>
-        `;
-        // Добавляем календарь после контейнера поля ввода
-        birthdateInput.parentNode.insertAdjacentElement('afterend', calendar);
-
-        // При наведении на календарь он остаётся открытым
-        calendar.addEventListener('mouseenter', function() {
-            // пустой обработчик
-        });
-        calendar.addEventListener('mouseleave', hideCalendarIfNotHovered);
-
-        // Заполняем заголовок (названия дней недели)
-        const dayNames = document.documentElement.lang === 'ru'
-            ? ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']
-            : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        const daysContainer = calendar.querySelector('.calendar-days');
-        daysContainer.innerHTML = dayNames.map(day => `<div class="day-name">${day}</div>`).join('');
-
-        // Обработчики изменения селектов месяца и года
-        const monthSelect = calendar.querySelector('#calendar-month-select');
-        const yearSelect = calendar.querySelector('#calendar-year-select');
-        monthSelect.addEventListener('change', function() {
-            updateCalendarDates(calendar, parseInt(yearSelect.value, 10), parseInt(monthSelect.value, 10));
-            updateCalendarHighlight(birthdateInput, calendar);
-        });
-        yearSelect.addEventListener('change', function() {
-            updateCalendarDates(calendar, parseInt(yearSelect.value, 10), parseInt(monthSelect.value, 10));
-            updateCalendarHighlight(birthdateInput, calendar);
-        });
-    }
-
-    let currentDate = new Date();
-    if (isValidDate(birthdateInput.value)) {
-        currentDate = new Date(formatDate(birthdateInput.value));
-    }
-    populateSelectors(calendar, currentDate.getFullYear(), currentDate.getMonth());
-    updateCalendarDates(calendar, currentDate.getFullYear(), currentDate.getMonth());
-    updateCalendarHighlight(birthdateInput, calendar);
-
-    // Показываем календарь
-    calendar.style.display = 'block';
-    requestAnimationFrame(() => {
-        calendar.classList.add('open');
-    });
-}
-
-// Функция скрытия календаря
-function hideCustomCalendar() {
+// Функция для открытия и закрытия календаря
+function toggleCalendar() {
     const calendar = document.getElementById('custom-calendar');
     if (calendar) {
-        calendar.classList.remove('open');
-        setTimeout(() => {
-            calendar.style.display = 'none';
-        }, 300);
+        if (calendar.classList.contains('open')) {
+            calendar.classList.remove('open');
+        } else {
+            syncCalendarWithInput();
+            calendar.classList.add('open');
+        }
     }
 }
-// Построение календаря для указанного месяца/года
-function buildCalendar(calendar, date, inputElement) {
-    const selectedMonth = date.getMonth();
-    const selectedYear = date.getFullYear();
 
-    // Строим заголовок с селектами для месяца и года
-    let headerHtml = '<div class="calendar-header">';
-    headerHtml += '<select id="calendar-month-select"></select>';
-    headerHtml += '<select id="calendar-year-select"></select>';
-    headerHtml += '</div>';
+// Обработчик для иконки открытия/закрытия календаря
+document.getElementById('calendar-icon')?.addEventListener('click', toggleCalendar);
 
-    // Заголовок с названиями дней недели
-    const dayNames = document.documentElement.lang === 'ru'
-        ? ['Вс','Пн','Вт','Ср','Чт','Пт','Сб']
-        : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    let daysHtml = '<div class="calendar-days">';
-    for (let d of dayNames) {
-        daysHtml += `<div class="day-name">${d}</div>`;
+// Закрытие календаря при клике вне его области
+document.addEventListener('click', function(event) {
+    const calendar = document.getElementById('custom-calendar');
+    const calendarIcon = document.getElementById('calendar-icon');
+    if (calendar && !calendar.contains(event.target) && !calendarIcon.contains(event.target)) {
+        calendar.classList.remove('open');
     }
-    daysHtml += '</div>';
+});
 
-    // Сетка дат
-    let datesHtml = '<div class="calendar-dates">';
-    // Определяем первый день месяца
-    const firstDay = new Date(selectedYear, selectedMonth, 1);
-    const startingDay = firstDay.getDay(); // 0–6
-    const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
-    // Пустые ячейки до первого дня месяца
-    for (let i = 0; i < startingDay; i++) {
+// Функция для создания календаря
+function buildCalendar() {
+    const calendar = document.getElementById('custom-calendar');
+    if (!calendar) return;
+
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth();
+
+    let calendarHtml = '<div class="calendar-header">';
+    calendarHtml += '<select id="calendar-month">';
+    for (let i = 0; i < 12; i++) {
+        calendarHtml += `<option value="${i}">${translations[getCurrentLanguage()].months[i]}</option>`;
+    }
+    calendarHtml += '</select>';
+    calendarHtml += '<select id="calendar-year">';
+    for (let i = currentYear - 100; i <= currentYear; i++) {
+        calendarHtml += `<option value="${i}">${i}</option>`;
+    }
+    calendarHtml += '</select>';
+    calendarHtml += '</div>';
+
+    calendarHtml += '<div class="calendar-days">';
+    translations[getCurrentLanguage()].weekDays.forEach(day => {
+        calendarHtml += `<div class="day-name">${day}</div>`;
+    });
+    calendarHtml += '</div>';
+
+    calendarHtml += '<div class="calendar-dates"></div>';
+
+    calendar.innerHTML = calendarHtml;
+
+    document.getElementById('calendar-month').addEventListener('change', syncCalendarWithInput);
+    document.getElementById('calendar-year').addEventListener('change', syncCalendarWithInput);
+
+    updateCalendar();
+}
+
+// Функция для обновления календаря
+function updateCalendar() {
+    const calendar = document.getElementById('custom-calendar');
+    const month = parseInt(document.getElementById('calendar-month').value, 10);
+    const year = parseInt(document.getElementById('calendar-year').value, 10);
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    // Сдвигаем первый день недели на понедельник
+    const adjustedFirstDay = (firstDay === 0) ? 6 : firstDay - 1;
+
+    let datesHtml = '';
+    for (let i = 0; i < adjustedFirstDay; i++) {
         datesHtml += '<div class="calendar-date empty"></div>';
     }
-    // Дни месяца
-    for (let d = 1; d <= daysInMonth; d++) {
-        datesHtml += `<div class="calendar-date" data-day="${d}">${d}</div>`;
+    for (let i = 1; i <= daysInMonth; i++) {
+        datesHtml += `<div class="calendar-date" data-date="${('0' + i).slice(-2)}.${('0' + (month + 1)).slice(-2)}.${year}">${i}</div>`;
     }
-    datesHtml += '</div>';
 
-    calendar.innerHTML = headerHtml + daysHtml + datesHtml;
+    calendar.querySelector('.calendar-dates').innerHTML = datesHtml;
 
-    // Заполняем селект месяца
-    const monthSelect = calendar.querySelector('#calendar-month-select');
-    for (let m = 0; m < 12; m++) {
-        const option = document.createElement('option');
-        option.value = m;
-        option.textContent = getMonthName(m);
-        if (m === selectedMonth) { option.selected = true; }
-        monthSelect.appendChild(option);
-    }
-    // Заполняем селект года (от 1900 до текущего года)
-    const yearSelect = calendar.querySelector('#calendar-year-select');
-    const currentYear = new Date().getFullYear();
-    for (let y = 1900; y <= currentYear; y++) {
-        const option = document.createElement('option');
-        option.value = y;
-        option.textContent = y;
-        if (y === selectedYear) { option.selected = true; }
-        yearSelect.appendChild(option);
-    }
-    // При изменении месяца/года пересоздаём календарь с новым выбором
-    monthSelect.addEventListener('change', function(e) {
-        const newMonth = parseInt(e.target.value, 10);
-        const newYear = parseInt(yearSelect.value, 10);
-        const newDate = new Date(newYear, newMonth, 1);
-        buildCalendar(calendar, newDate, inputElement);
-        updateCalendarHighlight(inputElement, calendar);
-    });
-    yearSelect.addEventListener('change', function(e) {
-        const newYear = parseInt(e.target.value, 10);
-        const newMonth = parseInt(monthSelect.value, 10);
-        const newDate = new Date(newYear, newMonth, 1);
-        buildCalendar(calendar, newDate, inputElement);
-        updateCalendarHighlight(inputElement, calendar);
-    });
-
-    // Добавляем обработку выбора дня
-    const dateCells = calendar.querySelectorAll('.calendar-date:not(.empty)');
-    dateCells.forEach(cell => {
-        cell.addEventListener('click', function(e) {
-            e.stopPropagation();
-            const selectedDay = parseInt(this.getAttribute('data-day'), 10);
-            const newYear = parseInt(yearSelect.value, 10);
-            const newMonth = parseInt(monthSelect.value, 10);
-            const constructedDate = new Date(newYear, newMonth, selectedDay);
-            inputElement.value = formatCustomDate(constructedDate);
-            hideCustomCalendar();
-            generateLifeCalendar();
-        });
-    });
-
-    // После построения выделяем выбранный день (если введён в поле)
-    updateCalendarHighlight(inputElement, calendar);
-}
-
-// Возвращает название месяца для выбранного языка
-function getMonthName(monthIndex) {
-    const lang = document.documentElement.lang || 'ru';
-    const months = lang === 'ru'
-        ? ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь']
-        : ['January','February','March','April','May','June','July','August','September','October','November','December'];
-    return months[monthIndex];
-}
-
-// Форматирует дату в строку dd.mm.yyyy
-function formatCustomDate(date) {
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}.${month}.${year}`;
-}
-
-function updateCalendarHighlight(inputElement, calendar) {
-    // Снимаем ранее выделенные ячейки
-    calendar.querySelectorAll('.calendar-date.highlight').forEach(cell => {
-        cell.classList.remove('highlight');
-    });
-    if (!inputElement.value) return;
-    const parts = inputElement.value.split('.');
-    
-    // Выделяем ячейку дня, если введено 2 цифры
-    if (parts[0] && parts[0].length === 2) {
-        const dayNumber = parseInt(parts[0], 10);
-        if (!isNaN(dayNumber)) {
-            const cell = calendar.querySelector(`.calendar-date[data-day="${dayNumber}"]`);
-            if (cell) cell.classList.add('highlight');
-        }
-    }
-    
-    // Обновляем селектор месяца без перестройки календаря
-    const monthSelect = calendar.querySelector('#calendar-month-select');
-    if (parts[1] && parts[1].length === 2) {
-        const monthNumber = parseInt(parts[1], 10);
-        if (!isNaN(monthNumber) && monthNumber >= 1 && monthNumber <= 12 && monthSelect) {
-            monthSelect.value = monthNumber - 1;
-        }
-    }
-    
-    // Обновляем селектор года без перестройки календаря
-    const yearSelect = calendar.querySelector('#calendar-year-select');
-    if (parts[2] && parts[2].length === 4 && yearSelect) {
-        const yearNumber = parseInt(parts[2], 10);
-        if (!isNaN(yearNumber)) {
-            yearSelect.value = yearNumber;
-        }
-    }
-}
-
-// Заполняет селекторы месяца и года (год – от 1900 до текущего года)
-function populateSelectors(calendar, selectedYear, selectedMonth) {
-    const monthSelect = calendar.querySelector('#calendar-month-select');
-    const yearSelect = calendar.querySelector('#calendar-year-select');
-    // Заполняем месяц, если ещё не заполнен или требуется обновление
-    if (!monthSelect.childElementCount) {
-        for (let m = 0; m < 12; m++) {
-            const option = document.createElement('option');
-            option.value = m;
-            option.textContent = getMonthName(m);
-            monthSelect.appendChild(option);
-        }
-    }
-    monthSelect.value = selectedMonth;
-
-    // Заполняем год
-    const currentYear = new Date().getFullYear();
-    yearSelect.innerHTML = '';
-    for (let y = 1900; y <= currentYear; y++) {
-        const option = document.createElement('option');
-        option.value = y;
-        option.textContent = y;
-        yearSelect.appendChild(option);
-    }
-    yearSelect.value = selectedYear;
-}
-
-function formatBirthdateInput(e) {
-    const input = e.target;
-    // Оставляем только цифры и ограничиваем до 8 символов (ДДММГГГГ)
-    let digits = input.value.replace(/\D/g, '');
-    if (digits.length > 8) digits = digits.slice(0, 8);
-
-    let formatted = '';
-    const day = digits.slice(0, 2);
-    let month = digits.slice(2, 4);
-    const year = digits.slice(4, 8);
-
-    // Добавляем день
-    formatted += day;
-
-    // Если есть хотя бы одна цифра для месяца – добавляем разделитель
-    if (digits.length > 2) {
-        formatted += '.';
-
-        // Если введена только одна цифра для месяца и это не операция удаления
-        if (month.length === 1 && (!e.inputType || !e.inputType.startsWith('delete'))) {
-            if (month === "0") {
-                // Если введён "0", оставляем как есть
-            } else if (parseInt(month, 10) >= 2 && parseInt(month, 10) <= 9) {
-                // Если введена цифра от 2 до 9, дополняем ведущим нулём
-                month = '0' + month;
+    // Обработчик для выбора даты
+    document.querySelectorAll('.calendar-date').forEach(dateElement => {
+        dateElement.addEventListener('click', function() {
+            if (!dateElement.classList.contains('empty')) {
+                const selectedDate = dateElement.getAttribute('data-date');
+                document.getElementById('birthdate-input').value = selectedDate;
+                highlightSelectedDate(selectedDate);
             }
-            // Если цифра равна "1", оставляем для возможности ввода 10-12
-        }
-        formatted += month;
-    }
-
-    // Если есть цифры для года – добавляем разделитель и год
-    if (digits.length > 4) {
-        formatted += '.';
-        formatted += year;
-    }
-
-    input.value = formatted;
-
-    // Если календарь открыт – обновляем выделение
-    const calendar = document.getElementById('custom-calendar');
-    if (calendar && calendar.style.display === 'block') {
-        updateCalendarHighlight(input, calendar);
-    }
-
-    // Если введён полный формат (8 цифр => DD.MM.YYYY), автоматически строим календарь
-    if (digits.length === 8) {
-        generateLifeCalendar();
-    }
-}
-
-function updateCalendarDates(calendar, year, month) {
-    const datesContainer = calendar.querySelector('.calendar-dates');
-    datesContainer.innerHTML = '';
-    const firstDay = new Date(year, month, 1);
-    const startingDay = firstDay.getDay(); // 0–6, где 0 = воскресенье
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    
-    // Добавляем пустые ячейки до первого дня месяца
-    for (let i = 0; i < startingDay; i++) {
-        const emptyCell = document.createElement('div');
-        emptyCell.className = 'calendar-date empty';
-        datesContainer.appendChild(emptyCell);
-    }
-    
-    // Добавляем ячейки с числами месяца
-    for (let d = 1; d <= daysInMonth; d++) {
-        const cell = document.createElement('div');
-        cell.className = 'calendar-date';
-        cell.dataset.day = d;
-        cell.textContent = d;
-        cell.addEventListener('click', function(e) {
-            e.stopPropagation();
-            const monthSelect = calendar.querySelector('#calendar-month-select');
-            const yearSelect = calendar.querySelector('#calendar-year-select');
-            const newDate = new Date(parseInt(yearSelect.value, 10), parseInt(monthSelect.value, 10), d);
-            document.getElementById('birthdate-input').value = formatCustomDate(newDate);
-            hideCustomCalendar();
-            generateLifeCalendar();
         });
-        datesContainer.appendChild(cell);
+    });
+}
+
+// Функция для выделения выбранной даты
+function highlightSelectedDate(date) {
+    document.querySelectorAll('.calendar-date').forEach(dateElement => {
+        if (dateElement.getAttribute('data-date') === date) {
+            dateElement.classList.add('highlight');
+        } else {
+            dateElement.classList.remove('highlight');
+        }
+    });
+}
+
+// Синхронизация календаря с полем ввода даты
+document.getElementById('birthdate-input')?.addEventListener('change', function(e) {
+    const value = e.target.value;
+    if (isValidDate(value)) {
+        const parts = value.split('.');
+        const year = parseInt(parts[2], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        document.getElementById('calendar-month').value = month;
+        document.getElementById('calendar-year').value = year;
+        updateCalendar();
+        highlightSelectedDate(value);
+    }
+});
+
+// Синхронизация календаря с полем ввода даты при изменении месяца или года
+function syncCalendarWithInput() {
+    const month = document.getElementById('calendar-month').value;
+    const year = document.getElementById('calendar-year').value;
+    const birthdateInput = document.getElementById('birthdate-input');
+    const currentDay = birthdateInput.value.split('.')[0] || '';
+    if (currentDay) {
+        birthdateInput.value = `${currentDay}.${('0' + (parseInt(month) + 1)).slice(-2)}.${year}`;
+        updateCalendar();
+        highlightSelectedDate(birthdateInput.value);
     }
 }
+
+// Синхронизация календаря с текущей датой
+document.addEventListener('DOMContentLoaded', function() {
+    const currentDate = new Date();
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    document.getElementById('calendar-month').value = month;
+    document.getElementById('calendar-year').value = year;
+    updateCalendar();
+});
+
+// Инициализация календаря
+document.addEventListener('DOMContentLoaded', buildCalendar);
+
+// Добавление обработчика кликов на текст и отображения скрытого меню без перехода по ссылке
+document.addEventListener('DOMContentLoaded', function() {
+    const someDayTexts = document.querySelectorAll('.clickable-text');
+    const hiddenMenu = document.createElement('div');
+    hiddenMenu.className = 'hidden-menu';
+    hiddenMenu.innerHTML = 'Для получения дополнительной информации, пожалуйста, посетите нашего бота в Telegram: <a href="https://t.me/LifeCalendarRobot" class="telegram-link">@LifeCalendarRobot</a>';
+    
+    someDayTexts.forEach(text => {
+        text.addEventListener('click', function(event) {
+            event.preventDefault();
+            if (!hiddenMenu.classList.contains('visible')) {
+                text.parentNode.insertBefore(hiddenMenu, text.nextSibling);
+                hiddenMenu.classList.add('visible');
+            }
+        });
+    });
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    const someDayLinks = document.querySelectorAll('.clickable-link');
+    const hiddenMenu = document.createElement('div');
+    hiddenMenu.className = 'hidden-menu';
+    hiddenMenu.innerHTML = 'Для получения дополнительной информации, пожалуйста, посетите нашего бота в Telegram: <a href="https://t.me/LifeCalendarRobot" class="telegram-link">@LifeCalendarRobot</a>';
+    
+    someDayLinks.forEach(link => {
+        link.addEventListener('click', function(event) {
+            event.preventDefault();
+            if (!hiddenMenu.classList.contains('visible')) {
+                link.parentNode.insertBefore(hiddenMenu, link.nextSibling);
+                hiddenMenu.classList.add('visible');
+            } else {
+                hiddenMenu.classList.remove('visible');
+            }
+        });
+    });
+});

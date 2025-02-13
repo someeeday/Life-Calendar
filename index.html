@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, maximum-scale=1.0, user-scalable=no">
     <meta name="MobileOptimized" content="320">
     <meta name="HandheldFriendly" content="True">
     <meta name="format-detection" content="telephone=no">
@@ -15,10 +15,9 @@
     <title>Life Calendar</title>
     
     <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" as="style">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Open+Sans:wght@400;600;700&family=Lato:wght@400;700&display=swap">
     <link rel="stylesheet" href="style.css">
 
     <!-- Yandex.Metrika counter -->
@@ -74,7 +73,7 @@
                                 <select class="form-select" 
                                         id="theme-select" 
                                         name="theme" 
-                                        onchange="applyTheme(this.value)">
+                                        onchange="changeTheme(this.value)">
                                     <option value="light" data-text-ru="Светлая" data-text-en="Light">Светлая</option>
                                     <option value="dark" data-text-ru="Тёмная" data-text-en="Dark">Тёмная</option>
                                 </select>
@@ -95,6 +94,8 @@
                                        aria-label="Date of birth">
                                 <span id="calendar-icon" class="calendar-icon"></span>
                             </div>
+                            <div id="birthdate-error" class="error-message"></div> <!-- Элемент для ошибок -->
+                            <div id="custom-calendar" class="custom-calendar"></div>
                         </div>
                     
                         <button type="button" 
@@ -116,10 +117,7 @@
         <footer class="footer">
             <div class="footer__content">
                 <span class="footer__text">Created by</span>
-                <a href="https://t.me/someeeday"    
-                   class="footer__link" 
-                   target="_blank" 
-                   rel="noopener noreferrer">@someeeday</a>
+                <a href="#" class="clickable-link">@someeeday</a>
             </div>
         </footer>
     </div>

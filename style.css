@@ -3,15 +3,15 @@
     --icon-color: #2c3e50;
     --highlight-color: var(--color-hover);
     --calendar-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24'%3E%3Cpath fill='%23000000' d='M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z'/%3E%3C/svg%3E");
-
+    
     /* Основные цвета */
-    --color-primary: #0088cc;
+    --color-primary: #2563eb;    /* Более насыщенный синий */
+    --color-hover: #1d4ed8;      /* Темнее основного */
     --color-surface: #ffffff;
-    --color-background: #f8f9fa;
-    --color-text: #2c3e50;
-    --color-border: #e9ecef;
-    --color-hover: #007ab8;
-    --color-focus: rgba(0, 136, 204, 0.2);
+    --color-background: #f8fafc;  /* Легкий серо-голубой */
+    --color-text: #0f172a;       /* Темно-синий */
+    --color-border: #e2e8f0;     /* Серо-голубой */
+    --color-focus: rgba(37, 99, 235, 0.2);  /* Синий с прозрачностью */
     
     /* Размеры и отступы */
     --spacing-xs: 4px;
@@ -24,17 +24,28 @@
     
     /* Эффекты */
     --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
-    --shadow-md: 0 4px 6px rgba(0,0,0,0.05);
+    --shadow-md: 0 4px 6px rgba(15, 23, 42, 0.1);
     --transition: all 0.2s ease;
+
+    /* Размеры для адаптивности */
+    --cell-size-mobile: 16px;
+    --cell-size-desktop: 20px;
+    --font-size-mobile: 14px;
+    --font-size-desktop: 16px;
+    --cell-gap-mobile: 2px;
+    --cell-gap-desktop: 3px;
 }
 
 /* Темная тема */
 [data-theme="dark"] {
-    --color-surface: #1a1a1a;
-    --color-background: #121212;
-    --color-text: #e9ecef;
-    --color-border: #2c2c2c;
-    --calendar-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24'%3E%3Cpath fill='%23ffffff' d='M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z'/%3E%3C/svg%3E");
+    --color-background: #0f172a;    /* Темно-синий */
+    --color-surface: #1e293b;       /* Немного светлее фона */
+    --color-text: #f1f5f9;          /* Светло-серый */
+    --color-border: #334155;        /* Серо-синий */
+    --color-primary: #3b82f6;       /* Яркий синий */
+    --color-hover: #60a5fa;         /* Светлее основного */
+    --color-focus: rgba(59, 130, 246, 0.2);
+    --calendar-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24'%3E%3Cpath fill='%23f1f5f9' d='M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z'/%3E%3C/svg%3E");
 }
 
 /* Базовые стили */
@@ -46,7 +57,7 @@
 
 body {
     transition: var(--transition-theme);
-    font-family: 'Roboto', system-ui, -apple-system, sans-serif;
+    font-family: 'Roboto', 'Open Sans', 'Lato', system-ui, -apple-system, sans-serif;
     background: var(--color-background);
     color: var(--color-text);
     line-height: 1.5;
@@ -156,7 +167,6 @@ body {
     background-repeat: no-repeat;
     background-position: right 12px center;
     padding-right: 40px;
-    background-size: 20px;
     /* Иконка для светлой темы (чёрная) */
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24'%3E%3Cpath fill='%23000000' d='M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z'/%3E%3C/svg%3E");
 }
@@ -170,13 +180,14 @@ body {
 .form-select:hover,
 .form-input:hover {
     border-color: var(--color-primary);
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.1);
 }
 
 .form-select:focus,
 .form-input:focus {
     outline: none;
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px var(--color-focus);
+    box-shadow: 0 0 0 3px var(--color-focus);
 }
 
 /* Календарь */
@@ -187,12 +198,15 @@ body {
     box-shadow: var(--shadow-md);
     flex: 1;
     overflow: hidden;
+    min-height: 500px; /* Минимальная высота для пустого состояния */
 }
 
 canvas {
     width: 100%;
     height: auto;
     display: block;
+    image-rendering: -webkit-optimize-contrast; /* Улучшаем чёткость на ретина дисплеях */
+    image-rendering: crisp-edges;
 }
 
 /* Кнопки */
@@ -210,10 +224,18 @@ canvas {
 .button--primary {
     background: var(--color-primary);
     color: white;
+    font-weight: 500;
+    transition: all 0.2s ease;
 }
 
 .button--primary:hover {
     background: var(--color-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+
+.button--primary:active {
+    transform: translateY(0);
 }
 
 /* Футер */
@@ -232,11 +254,14 @@ canvas {
 .footer__link {
     color: var(--color-primary);
     text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
 }
 
 .footer__link:hover {
     color: var(--color-hover);
-    text-decoration: underline;
+    text-decoration: none;
+    opacity: 0.9;
 }
 
 /* Мобильная версия и адаптив */
@@ -282,7 +307,7 @@ canvas {
 .is-telegram .form-select,
 .is-telegram .form-input {
     background: var(--tg-theme-bg-color, var(--color-surface));
-    border-color: var(--tg-theme-hint-color, var(--color-border));
+    border-color: var(--tg-theme-hint-color, var (--color-border));
     color: var(--tg-theme-text-color, var(--color-text));
 }
 
@@ -292,144 +317,207 @@ canvas {
 
 /* Новые определения для более современного вида календаря */
 .custom-calendar {
-    background: #ffffff;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-family: 'Roboto', sans-serif;
+    position: relative;  /* Меняем с absolute на relative */
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    visibility: hidden;
+    transition: max-height 0.4s ease, opacity 0.3s ease, visibility 0s linear 0.3s;
+    margin-top: var(--spacing-sm);
 }
+
 .custom-calendar.open {
-    /* Задаем достаточно большую максимальную высоту для анимации */
-    max-height: 500px;
+    max-height: 350px;  /* Фиксированная высота для плавной анимации */
     opacity: 1;
+    visibility: visible;
+    transition-delay: 0s;
 }
+
 .calendar-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: var(--color-background, #ffffff);
-    border-bottom: 1px solid var(--color-border, #ccc);
-    padding: 8px;
+    padding: 12px;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
 }
+
 .calendar-header select {
-    background: transparent;
-    border: none;
+    padding: 4px 8px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-text);
     font-size: 14px;
-    color: var(--text-color, #333);
     cursor: pointer;
     outline: none;
 }
-.calendar-days, .calendar-dates {
+
+.calendar-header select:hover {
+    border-color: var (--color-primary);
+}
+
+.calendar-days {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
+    padding: 8px;
+    background: var (--color-surface);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.calendar-days .day-name {
+    padding: 8px 0;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-text);
     text-align: center;
 }
-.calendar-days .day-name {
-    padding: 6px 0;
-    font-size: 12px;
-    background: var(--color-surface, #f8f8f8);
-    border-bottom: 1px solid var(--color-border, #ccc);
-}
+
 .calendar-dates {
-    padding: 8px;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
     gap: 4px;
+    padding: 8px;
+    background: var(--color-surface);
 }
-.calendar-dates .calendar-date {
-    padding: 6px 0;
+
+.calendar-date {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 36px;
     font-size: 14px;
+    border-radius: var(--radius-md);
     cursor: pointer;
-    border-radius: 4px;
-    transition: background 0.1s, color 0.1s;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    user-select: none;
+    position: relative;
+    z-index: 1;
 }
-.calendar-dates .calendar-date:hover {
-    background: var(--color-hover, #007acc);
-    color: #fff;
+
+.calendar-date:not(.empty):hover {
+    background-color: var(--color-hover);
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+    z-index: 3;
 }
-.calendar-dates .calendar-date.empty {
+
+.calendar-date.highlight {
+    background-color: var(--color-primary);
+    color: white;
+    font-weight: 500;
+    box-shadow: 0 0 0 2px var(--color-primary);
+    transform: scale(1.05);
+    z-index: 2;
+}
+
+.calendar-date.empty {
     cursor: default;
     background: transparent;
 }
-.calendar-dates .calendar-date.highlight {
-    background: var(--color-hover, #007acc);
-    color: #fff;
-}
+
 .date-input-container {
     position: relative;
-    display: flex;
-    align-items: center;
 }
+
 .calendar-icon {
     position: absolute;
     right: 10px;
-    pointer-events: none;
-    width: 20px;
-    height: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    background-color: transparent;
     background-image: var(--calendar-icon);
     background-repeat: no-repeat;
     background-position: center;
-}
-.custom-calendar .calendar-header select {
-    background: #ffffff;
-    border: none;
-    margin-right: 10px;
-    font-size: 14px;
-    color: #333;
-    padding: 4px 8px;
-    border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    background-size: 20px;
     cursor: pointer;
-    -webkit-appearance: none;
-       -moz-appearance: none;
-            appearance: none;
+    transition: transform 0.2s ease;
 }
 
-/* Стили для дней недели */
-.custom-calendar .calendar-days {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    text-align: center;
-    background: #f0f0f0;
-    border-bottom: 1px solid #ddd;
+.calendar-icon:hover {
+    transform: translateY(-50%) scale(1.1);
 }
 
-.custom-calendar .calendar-days .day-name {
-    padding: 6px 0;
+.calendar-icon:active {
+    transform: translateY(-50%) scale(0.95);
+}
+
+/* Стили для отображения ошибок */
+.error-message {
+    color: red;
     font-size: 12px;
-    font-weight: 500;
-    color: #333;
+    margin-top: var(--spacing-xs);
+    display: none;
 }
 
-/* Стили для дат */
-.custom-calendar .calendar-dates {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    text-align: center;
-    gap: 4px;
-    padding: 8px;
+/* Медиа-запросы для адаптивности */
+@media (max-width: 768px) {
+    :root {
+        --spacing-lg: 16px;
+        --spacing-md: 12px;
+    }
+    
+    .calendar {
+        padding: var(--spacing-md);
+        min-height: 400px;
+    }
+    
+    canvas {
+        max-width: 100%;
+        height: auto;
+    }
 }
 
-.custom-calendar .calendar-dates .calendar-date {
-    padding: 8px 0;
+/* Стили для отображения меню при клике на ссылку */
+.hidden-menu {
+    display: none;
+    margin-top: var(--spacing-md);
     font-size: 14px;
-    border-radius: 4px;
+    color: var(--color-text);
+}
+
+.hidden-menu.visible {
+    display: block;
+}
+
+.telegram-link {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.telegram-link:hover {
+    color: var(--color-hover);
+    text-decoration: underline;
+}
+
+.clickable-text {
+    color: var(--color-primary);
     cursor: pointer;
-    transition: background-color 0.2s ease, color 0.2s ease;
-    color: #007acc;
-    background: #fff;
-    border: 1px solid transparent;
+    text-decoration: underline;
 }
 
-.custom-calendar .calendar-dates .calendar-date:hover {
-    background: #007acc;
-    color: #ffffff;
-}
-
-.custom-calendar .calendar-dates .calendar-date.empty {
+.inactive-link {
+    pointer-events: none;
     cursor: default;
-    background: transparent;
-    border: none;
 }
 
-.custom-calendar .calendar-dates .calendar-date.highlight {
-    background: #005f9e;
-    color: #fff;
+.clickable-link {
+    color: var(--color-primary);
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.clickable-link:hover {
+    text-decoration: underline;
 }
