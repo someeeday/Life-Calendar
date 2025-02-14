@@ -307,7 +307,7 @@ canvas {
 .is-telegram .form-select,
 .is-telegram .form-input {
     background: var(--tg-theme-bg-color, var(--color-surface));
-    border-color: var(--tg-theme-hint-color, var (--color-border));
+    border-color: var(--tg-theme-hint-color, var(--color-border));
     color: var(--tg-theme-text-color, var(--color-text));
 }
 
@@ -477,47 +477,42 @@ canvas {
     }
 }
 
-/* Стили для отображения меню при клике на ссылку */
-.hidden-menu {
-    display: none;
-    margin-top: var(--spacing-md);
-    font-size: 14px;
-    color: var(--color-text);
-}
-
-.hidden-menu.visible {
-    display: block;
-}
-
-.telegram-link {
+/* Стили для скрытого текста и ссылки */
+.clickable-link {
     color: var(--color-primary);
     text-decoration: none;
-    font-weight: 500;
-    transition: all 0.2s ease;
+    cursor: pointer;
+    transition: color 0.2s ease;
 }
 
-.telegram-link:hover {
+.clickable-link:hover {
     color: var(--color-hover);
     text-decoration: underline;
 }
 
-.clickable-text {
-    color: var(--color-primary);
-    cursor: pointer;
-    text-decoration: underline;
+.hidden-content {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    transition: max-height 0.4s ease, opacity 0.3s ease, visibility 0s linear 0.3s;
 }
 
-.inactive-link {
-    pointer-events: none;
-    cursor: default;
+.hidden-content p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--color-text);
 }
 
-.clickable-link {
+.hidden-content a {
     color: var(--color-primary);
-    cursor: pointer;
     text-decoration: none;
+    transition: color 0.2s ease;
 }
 
-.clickable-link:hover {
+.hidden-content a:hover {
+    color: var(--color-hover);
     text-decoration: underline;
 }

@@ -10,12 +10,13 @@ const translations = {
         dark: 'Тёмная',
         createCalendar: 'Создать календарь',
         datePlaceholder: 'ДД.ММ.ГГГГ',
-        invalidDate: 'Введите корректную дату в формате ДД.ММ.ГГГ',
+        invalidDate: 'Введите корректную дату в формате ДД.ММ.ГГГГ',
         errorCreating: 'Ошибка при создании календаря',
-        confirmOldAge: 'Возраст превышает 90 лет',
+        confirmOldAge: 'Возраст превышает 90 лет. Отобразить полностью заполненный календарь?',
         months: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 
                 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
-        weekDays: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
+        weekDays: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
+        hiddenText: "Привет, это <a href='https://t.me/someeeday'>мой</a> сайт. Ты получил дополнительную тему, можешь посмотреть её. Также держи бота в Telegram <a id='bot-link' href='https://t.me/LifeCalendarRobot'>@LifeCalendarRobot</a>, там больше функционала."
     },
     en: {
         age: '← Age',
@@ -29,10 +30,11 @@ const translations = {
         datePlaceholder: 'DD.MM.YYYY',
         invalidDate: 'Enter a valid date in DD.MM.YYYY format',
         errorCreating: 'Error creating calendar',
-        confirmOldAge: 'Age exceeds 90 years',
+        confirmOldAge: 'Age exceeds 90 years. Show fully filled calendar?',
         months: ['January', 'February', 'March', 'April', 'May', 'June',
                 'July', 'August', 'September', 'October', 'November', 'December'],
-        weekDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        weekDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        hiddenText: "Hello, this is <a href='https://t.me/someeeday'>my</a> website. You have received an additional theme, you can check it out. Also, here is the Telegram bot <a id='bot-link' href='https://t.me/LifeCalendarRobot'>@LifeCalendarRobot</a> with more functionality."
     }
 };
 
@@ -244,6 +246,16 @@ function changeLanguage(lang) {
         el.textContent = el.getAttribute(`data-text-${lang}`);
     });
     document.getElementById('birthdate-input').placeholder = translations[lang].datePlaceholder;
+    // Обновляем текст скрытого элемента
+    const hiddenText = document.getElementById('hidden-text');
+    if (hiddenText) {
+        hiddenText.innerHTML = translations[lang].hiddenText;
+        const birthdate = document.getElementById('birthdate-input').value;
+        const botLink = document.getElementById('bot-link');
+        if (botLink) {
+            botLink.href = isValidDate(birthdate) ? `https://t.me/LifeCalendarRobot?start=${birthdate}` : 'https://t.me/LifeCalendarRobot';
+        }
+    }
     // Сохраняем текущее значение даты
     const birthdate = document.getElementById('birthdate-input').value;
     const parts = birthdate.split('.');
@@ -289,30 +301,14 @@ document.addEventListener('DOMContentLoaded', () => {
     changeLanguage(savedLang);
 });
 
-// Функция для подтверждения возраста старше 90 лет
-function confirmOldAge() {
-    const lang = getCurrentLanguage();
-    showError(translations[lang].confirmOldAge);
-}
-
 // Функция генерации календаря жизни
 function generateLifeCalendar() {
     const birthdate = document.getElementById('birthdate-input').value;
     if (isValidDate(birthdate)) {
         hideError(); // Скрываем ошибку при валидной дате
         const livedWeeks = calculateLivedWeeks(birthdate);
-        const totalYears = 91;
-        const parts = birthdate.split('.');
-        const birthYear = parseInt(parts[2], 10);
-        const currentYear = new Date().getFullYear();
-        const age = currentYear - birthYear;
-
-        if (age > 90) {
-            confirmOldAge();
-            return;
-        }
-
-        createLifeGrid(livedWeeks, totalYears);
+        createLifeGrid(livedWeeks);
+        window.scrollTo({ top: 0, behavior: 'smooth' }); // Возвращаемся в начало сайта
     } else {
         showError(translations[getCurrentLanguage()].invalidDate); // Показываем ошибку при невалидной дате
     }
@@ -438,6 +434,10 @@ document.getElementById('birthdate-input')?.addEventListener('change', function(
         updateCalendar();
         highlightSelectedDate(value);
     }
+    const botLink = document.getElementById('bot-link');
+    if (botLink) {
+        botLink.href = isValidDate(value) ? `https://t.me/LifeCalendarRobot?start=${value}` : 'https://t.me/LifeCalendarRobot';
+    }
 });
 
 // Синхронизация календаря с полем ввода даты при изменении месяца или года
@@ -466,39 +466,20 @@ document.addEventListener('DOMContentLoaded', function() {
 // Инициализация календаря
 document.addEventListener('DOMContentLoaded', buildCalendar);
 
-// Добавление обработчика кликов на текст и отображения скрытого меню без перехода по ссылке
-document.addEventListener('DOMContentLoaded', function() {
-    const someDayTexts = document.querySelectorAll('.clickable-text');
-    const hiddenMenu = document.createElement('div');
-    hiddenMenu.className = 'hidden-menu';
-    hiddenMenu.innerHTML = 'Для получения дополнительной информации, пожалуйста, посетите нашего бота в Telegram: <a href="https://t.me/LifeCalendarRobot" class="telegram-link">@LifeCalendarRobot</a>';
-    
-    someDayTexts.forEach(text => {
-        text.addEventListener('click', function(event) {
-            event.preventDefault();
-            if (!hiddenMenu.classList.contains('visible')) {
-                text.parentNode.insertBefore(hiddenMenu, text.nextSibling);
-                hiddenMenu.classList.add('visible');
-            }
-        });
-    });
-});
-
-document.addEventListener('DOMContentLoaded', function() {
-    const someDayLinks = document.querySelectorAll('.clickable-link');
-    const hiddenMenu = document.createElement('div');
-    hiddenMenu.className = 'hidden-menu';
-    hiddenMenu.innerHTML = 'Для получения дополнительной информации, пожалуйста, посетите нашего бота в Telegram: <a href="https://t.me/LifeCalendarRobot" class="telegram-link">@LifeCalendarRobot</a>';
-    
-    someDayLinks.forEach(link => {
-        link.addEventListener('click', function(event) {
-            event.preventDefault();
-            if (!hiddenMenu.classList.contains('visible')) {
-                link.parentNode.insertBefore(hiddenMenu, link.nextSibling);
-                hiddenMenu.classList.add('visible');
-            } else {
-                hiddenMenu.classList.remove('visible');
-            }
-        });
-    });
-});
+// Функция для открытия скрытого элемента и прокрутки страницы до конца
+function toggleHiddenContent() {
+    const hiddenContent = document.getElementById('hidden-content');
+    const hiddenText = document.getElementById('hidden-text');
+    if (hiddenContent && hiddenText) {
+        hiddenContent.style.display = hiddenContent.style.display === 'none' ? 'block' : 'none';
+        hiddenText.innerHTML = translations[getCurrentLanguage()].hiddenText;
+        const birthdate = document.getElementById('birthdate-input').value;
+        const botLink = document.getElementById('bot-link');
+        if (botLink) {
+            botLink.href = isValidDate(birthdate) ? `https://t.me/LifeCalendarRobot?start=${birthdate}` : 'https://t.me/LifeCalendarRobot';
+        }
+        if (hiddenContent.style.display === 'block') {
+            hiddenContent.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+}
