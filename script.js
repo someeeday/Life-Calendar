@@ -348,12 +348,15 @@ function sendUserData(birthdate) {
             initData: tg.initData // Добавляем initData
         };
 
+        console.log("📤 Отправка данных в бота:", data);
         tg.sendData(JSON.stringify(data)); // Отправляем в бота
         
         // Закрываем WebApp после отправки
         setTimeout(() => {
             tg.close();
         }, 100);
+    } else {
+        console.warn("⚠ Данные не отправлены, так как Web App не открыт в Telegram.");
     }
 }
 
