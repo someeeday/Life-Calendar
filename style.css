@@ -412,14 +412,14 @@ canvas {
 }
 
 .calendar-header select:hover {
-    border-color: var (--color-primary);
+    border-color: var(--color-primary);
 }
 
 .calendar-days {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     padding: 8px;
-    background: var (--color-surface);
+    background: var(--color-surface);
     border-bottom: 1px solid var(--color-border);
 }
 
@@ -436,7 +436,7 @@ canvas {
     grid-template-columns: repeat(7, 1fr);
     gap: 4px;
     padding: 8px;
-    background: var (--color-surface);
+    background: var(--color-surface);
 }
 
 .calendar-date {

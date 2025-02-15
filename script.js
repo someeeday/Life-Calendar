@@ -16,9 +16,7 @@ const translations = {
         months: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 
                 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
         weekDays: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
-        hiddenText: "Привет, это <a href='https://t.me/someeeday'>мой</a> сайт. Также у меня есть бот в Telegram <a id='bot-link' href='https://t.me/LifeCalendarRobot'>@LifeCalendarRobot</a>, уверен тебе понравится!",
-        notFromBot: 'Приложение не из бота',
-        openBot: 'Чтобы получать уведомления, откройте приложение через бота @LifeCalendarRobot'
+        hiddenText: "Привет, это <a href='https://t.me/someeeday'>мой</a> сайт. Уверен, тебе понравится!"
     },
     en: {
         age: '← Age',
@@ -36,11 +34,11 @@ const translations = {
         months: ['January', 'February', 'March', 'April', 'May', 'June',
                 'July', 'August', 'September', 'October', 'November', 'December'],
         weekDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-        hiddenText: "Hello, this is <a href='https://t.me/someeeday'>my</a> website. Also check out our Telegram bot <a id='bot-link' href='https://t.me/LifeCalendarRobot'>@LifeCalendarRobot</a>, I'm sure you'll love it!",
-        notFromBot: 'App not from bot',
-        openBot: 'To receive notifications, open the app through @LifeCalendarRobot bot'
+        hiddenText: "Hello, this is <a href='https://t.me/someeeday'>my</a> website. I'm sure you'll love it!"
     }
 };
+
+let tg = window.Telegram.WebApp;
 
 // Основные цветовые схемы
 const darkThemeColors = {
@@ -257,11 +255,6 @@ function changeLanguage(lang) {
     const hiddenText = document.getElementById('hidden-text');
     if (hiddenText) {
         hiddenText.innerHTML = translations[lang].hiddenText;
-        const birthdate = document.getElementById('birthdate-input').value;
-        const botLink = document.getElementById('bot-link');
-        if (botLink) {
-            botLink.href = isValidDate(birthdate) ? `https://t.me/LifeCalendarRobot?start=${birthdate}` : 'https://t.me/LifeCalendarRobot';
-        }
     }
 
     // Перестраиваем календарь выбора даты
@@ -313,21 +306,18 @@ function generateLifeCalendar() {
 
     hideError();
     const livedWeeks = calculateLivedWeeks(birthdate);
-    createLifeGrid(livedWeeks);
+    const totalYears = 91;
+
+    if (livedWeeks > totalYears * 52) {
+        const confirmMessage = translations[getCurrentLanguage()].confirmOldAge;
+        if (!confirm(confirmMessage)) {
+            return;
+        }
+    }
+
+    createLifeGrid(livedWeeks, totalYears);
     window.scrollTo({ top: 0, behavior: 'smooth' });
     saveSettings({ birthdate });
-
-    // Только для Telegram Web App
-    if (window.Telegram && window.Telegram.WebApp) {
-        const webApp = window.Telegram.WebApp;
-        
-        // Отправляем данные боту
-        webApp.sendData(JSON.stringify({
-            type: 'message',
-            action: 'sendHello',
-            birthdate: birthdate
-        }));
-    }
 }
 
 // Функция для открытия и закрытия календаря
@@ -457,10 +447,6 @@ document.getElementById('birthdate-input')?.addEventListener('change', function(
         updateCalendar();
         highlightSelectedDate(value);
     }
-    const botLink = document.getElementById('bot-link');
-    if (botLink) {
-        botLink.href = isValidDate(value) ? `https://t.me/LifeCalendarRobot?start=${value}` : 'https://t.me/LifeCalendarRobot';
-    }
 });
 
 // Синхронизация календаря с полем ввода даты при изменении месяца или года
@@ -500,11 +486,6 @@ function toggleHiddenContent() {
     if (hiddenContent && hiddenText) {
         hiddenContent.style.display = hiddenContent.style.display === 'none' ? 'block' : 'none';
         hiddenText.innerHTML = translations[getCurrentLanguage()].hiddenText;
-        const birthdate = document.getElementById('birthdate-input').value;
-        const botLink = document.getElementById('bot-link');
-        if (botLink) {
-            botLink.href = isValidDate(birthdate) ? `https://t.me/LifeCalendarRobot?start=${birthdate}` : 'https://t.me/LifeCalendarRobot';
-        }
         if (hiddenContent.style.display === 'block') {
             hiddenContent.scrollIntoView({ behavior: 'smooth' });
         }
@@ -554,98 +535,4 @@ function applySettings() {
 // Добавляем вызов применения настроек при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
     applySettings();
-});
-
-// Функция сохранения календаря
-async function saveCalendar() {
-    const birthdate = document.getElementById('birthdate-input').value;
-    if (!isValidDate(birthdate)) {
-        showError(translations[getCurrentLanguage()].invalidDate);
-        return;
-    }
-
-    try {
-        // Проверяем, находимся ли мы в Telegram WebApp
-        if (window.Telegram && window.Telegram.WebApp) {
-            // Для Telegram отправляем только дату рождения
-            // Бот сам сгенерирует календарь на сервере
-            window.Telegram.WebApp.sendData(JSON.stringify({
-                type: 'generateCalendar',
-                birthdate: birthdate
-            }));
-            return;
-        }
-
-        // Для остальных случаев - обычное сохранение
-        const canvas = document.getElementById('lifeCanvas');
-        const tempCanvas = document.createElement('canvas');
-        const tempCtx = tempCanvas.getContext('2d');
-        
-        tempCanvas.width = canvas.width;
-        tempCanvas.height = canvas.height;
-        
-        // Рисуем белый фон
-        tempCtx.fillStyle = '#FFFFFF';
-        tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-        tempCtx.drawImage(canvas, 0, 0);
-
-        // Получаем PNG
-        const imageData = tempCanvas.toDataURL('image/png', 1.0);
-
-        // Для мобильных устройств
-        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-            const link = document.createElement('a');
-            link.download = `life-calendar-${birthdate}.png`;
-            link.href = imageData;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            return;
-        }
-
-        // Для десктопа создаем PDF
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF({
-            orientation: 'landscape',
-            unit: 'mm',
-            format: 'a4'
-        });
-
-        const pageWidth = 297;
-        const pageHeight = 210;
-        const margin = 10;
-        const imgWidth = pageWidth - (margin * 2);
-        const imgHeight = pageHeight - (margin * 2);
-
-        pdf.addImage(imageData, 'PNG', margin, margin, imgWidth, imgHeight);
-        pdf.save(`life-calendar-${birthdate}.pdf`);
-
-    } catch (error) {
-        console.error('Error saving calendar:', error);
-        showError(translations[getCurrentLanguage()].savingError);
-    }
-}
-
-// Обновляем переводы
-translations.ru = {
-    ...translations.ru,
-    savingError: 'Не удалось сохранить календарь. Попробуйте еще раз.',
-    saveSuccess: 'Календарь успешно сохранен',
-    calendarCreated: 'Календарь создан',
-    checkMessages: 'Проверьте сообщения от бота'
-};
-
-translations.en = {
-    ...translations.en,
-    savingError: 'Failed to save calendar. Please try again.',
-    saveSuccess: 'Calendar saved successfully',
-    calendarCreated: 'Calendar created',
-    checkMessages: 'Check bot messages'
-};
-
-// Добавляем обработчик после загрузки DOM
-document.addEventListener('DOMContentLoaded', function() {
-
-    // Добавляем обработчик для кнопки сохранения
-    document.getElementById('save-calendar-btn')?.addEventListener('click', saveCalendar);
 });
