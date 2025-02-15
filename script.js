@@ -6,12 +6,6 @@ if (tg) {
 
     console.log("✅ Web App открыт в Telegram");
     console.log("🔹 initData:", tg.initData);
-
-    if (!tg.initDataUnsafe.user) {
-        alert("⚠ Telegram не передал данные. Откройте через кнопку в боте!");
-    }
-} else {
-    alert("❌ Откройте Web App через Telegram!");
 }
 
 // Конфигурация переводов
@@ -354,8 +348,6 @@ function sendUserData(birthdate) {
         setTimeout(() => {
             tg.close();
         }, 100);
-    } else {
-        alert("⚠ Web App не в Telegram, данные не переданы!");
     }
 }
 
@@ -599,108 +591,8 @@ document.addEventListener('DOMContentLoaded', () => {
     applySettings();
 });
 
-// Функция сохранения календаря
-async function saveCalendar() {
-    const birthdate = document.getElementById('birthdate-input').value;
-    if (!isValidDate(birthdate)) {
-        showError(translations[getCurrentLanguage()].invalidDate);
-        return;
-    }
-
-    try {
-        // Проверяем, находимся ли мы в Telegram WebApp
-        if (tg) {
-            // Для Telegram отправляем только дату рождения
-            // Бот сам сгенерирует календарь на сервере
-            tg.sendData(JSON.stringify({
-                type: 'generateCalendar',
-                birthdate: birthdate
-            }));
-            return;
-        }
-
-        // Для остальных случаев - обычное сохранение
-        const canvas = document.getElementById('lifeCanvas');
-        const tempCanvas = document.createElement('canvas');
-        const tempCtx = tempCanvas.getContext('2d');
-        
-        tempCanvas.width = canvas.width;
-        tempCanvas.height = canvas.height;
-        
-        // Рисуем белый фон
-        tempCtx.fillStyle = '#FFFFFF';
-        tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-        tempCtx.drawImage(canvas, 0, 0);
-
-        // Получаем PNG
-        const imageData = tempCanvas.toDataURL('image/png', 1.0);
-
-        // Для мобильных устройств
-        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-            const link = document.createElement('a');
-            link.download = `life-calendar-${birthdate}.png`;
-            link.href = imageData;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            return;
-        }
-
-        // Для десктопа создаем PDF
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF({
-            orientation: 'landscape',
-            unit: 'mm',
-            format: 'a4'
-        });
-
-        const pageWidth = 297;
-        const pageHeight = 210;
-        const margin = 10;
-        const imgWidth = pageWidth - (margin * 2);
-        const imgHeight = pageHeight - (margin * 2);
-
-        pdf.addImage(imageData, 'PNG', margin, margin, imgWidth, imgHeight);
-        pdf.save(`life-calendar-${birthdate}.pdf`);
-
-    } catch (error) {
-        console.error('Error saving calendar:', error);
-        showError(translations[getCurrentLanguage()].savingError);
-    }
-}
-
-// Обновляем переводы
-translations.ru = {
-    ...translations.ru,
-    savingError: 'Не удалось сохранить календарь. Попробуйте еще раз.',
-    saveSuccess: 'Календарь успешно сохранен',
-    calendarCreated: 'Календарь создан',
-    checkMessages: 'Проверьте сообщения от бота'
-};
-
-translations.en = {
-    ...translations.en,
-    savingError: 'Failed to save calendar. Please try again.',
-    saveSuccess: 'Calendar saved successfully',
-    calendarCreated: 'Calendar created',
-    checkMessages: 'Check bot messages'
-};
-
-// Добавляем обработчик после загрузки DOM
+// При загрузке DOM
 document.addEventListener('DOMContentLoaded', function() {
-
-    // Добавляем обработчик для кнопки сохранения
-    document.getElementById('save-calendar-btn')?.addEventListener('click', saveCalendar);
-
-    if (tg) {
-        tg.ready();
-        // Если есть сохранённая дата, показываем кнопку
-        const birthdate = localStorage.getItem('birthdate');
-        if (birthdate && isValidDate(birthdate)) {
-            tg.MainButton.setText('Сохранить календарь');
-            tg.MainButton.show();
-        }
-    }
     // Инициализируем Telegram WebApp
     if (tg) {
         tg.ready();
