@@ -1,6 +1,19 @@
 // Инициализация Telegram Web App
 let tg = window.Telegram?.WebApp;
 
+if (tg) {
+    tg.expand(); // Развернуть Web App
+
+    console.log("✅ Web App открыт в Telegram");
+    console.log("🔹 initData:", tg.initData);
+
+    if (!tg.initDataUnsafe.user) {
+        alert("⚠ Telegram не передал данные. Откройте через кнопку в боте!");
+    }
+} else {
+    alert("❌ Откройте Web App через Telegram!");
+}
+
 // Конфигурация переводов
 const translations = {
     ru: {
@@ -322,16 +335,27 @@ function generateLifeCalendar() {
 
     // Если это Telegram WebApp
     if (tg) {
-        // Сразу отправляем данные боту без MainButton
-        tg.sendData(JSON.stringify({
-            type: 'register',
-            birthdate: birthdate
-        }));
+        sendUserData(birthdate);
+    }
+}
+
+// Функция отправки данных пользователя
+function sendUserData(birthdate) {
+    if (tg && tg.initData) {
+        const data = {
+            type: "register",
+            birthdate: birthdate,
+            initData: tg.initData // Добавляем initData
+        };
+
+        tg.sendData(JSON.stringify(data)); // Отправляем в бота
         
         // Закрываем WebApp после отправки
         setTimeout(() => {
             tg.close();
         }, 100);
+    } else {
+        alert("⚠ Web App не в Telegram, данные не переданы!");
     }
 }
 
