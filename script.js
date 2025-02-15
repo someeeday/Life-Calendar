@@ -16,7 +16,9 @@ const translations = {
         months: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 
                 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
         weekDays: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
-        hiddenText: "Привет, это <a href='https://t.me/someeeday'>мой</a> сайт. Также у меня есть бот в Telegram <a id='bot-link' href='https://t.me/LifeCalendarRobot'>@LifeCalendarRobot</a>, уверен тебе понравится!"
+        hiddenText: "Привет, это <a href='https://t.me/someeeday'>мой</a> сайт. Также у меня есть бот в Telegram <a id='bot-link' href='https://t.me/LifeCalendarRobot'>@LifeCalendarRobot</a>, уверен тебе понравится!",
+        notFromBot: 'Приложение не из бота',
+        openBot: 'Чтобы получать уведомления, откройте приложение через бота @LifeCalendarRobot'
     },
     en: {
         age: '← Age',
@@ -34,7 +36,9 @@ const translations = {
         months: ['January', 'February', 'March', 'April', 'May', 'June',
                 'July', 'August', 'September', 'October', 'November', 'December'],
         weekDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-        hiddenText: "Hello, this is <a href='https://t.me/someeeday'>my</a> website. Also check out our Telegram bot <a id='bot-link' href='https://t.me/LifeCalendarRobot'>@LifeCalendarRobot</a>, I'm sure you'll love it!"
+        hiddenText: "Hello, this is <a href='https://t.me/someeeday'>my</a> website. Also check out our Telegram bot <a id='bot-link' href='https://t.me/LifeCalendarRobot'>@LifeCalendarRobot</a>, I'm sure you'll love it!",
+        notFromBot: 'App not from bot',
+        openBot: 'To receive notifications, open the app through @LifeCalendarRobot bot'
     }
 };
 
@@ -302,28 +306,27 @@ document.addEventListener('DOMContentLoaded', () => {
 // Функция генерации календаря жизни
 function generateLifeCalendar() {
     const birthdate = document.getElementById('birthdate-input').value;
-    if (isValidDate(birthdate)) {
-        hideError();
-        const livedWeeks = calculateLivedWeeks(birthdate);
-        createLifeGrid(livedWeeks);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        saveSettings({ birthdate });
-
-        // Если находимся в Telegram Web App, отправляем сообщение
-        if (window.Telegram && window.Telegram.WebApp) {
-            window.Telegram.WebApp.sendData(JSON.stringify({
-                type: 'message',
-                action: 'sendHello',
-                birthdate: birthdate
-            }));
-            
-            window.Telegram.WebApp.showPopup({
-                title: translations[getCurrentLanguage()].calendarCreated,
-                message: translations[getCurrentLanguage()].checkMessages
-            });
-        }
-    } else {
+    if (!isValidDate(birthdate)) {
         showError(translations[getCurrentLanguage()].invalidDate);
+        return;
+    }
+
+    hideError();
+    const livedWeeks = calculateLivedWeeks(birthdate);
+    createLifeGrid(livedWeeks);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    saveSettings({ birthdate });
+
+    // Только для Telegram Web App
+    if (window.Telegram && window.Telegram.WebApp) {
+        const webApp = window.Telegram.WebApp;
+        
+        // Отправляем данные боту
+        webApp.sendData(JSON.stringify({
+            type: 'message',
+            action: 'sendHello',
+            birthdate: birthdate
+        }));
     }
 }
 
