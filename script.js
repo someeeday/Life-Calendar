@@ -320,7 +320,14 @@ function toggleCalendar() {
         if (calendar.classList.contains('open')) {
             calendar.classList.remove('open');
         } else {
-            syncCalendarWithInput();
+            const birthdateInput = document.getElementById('birthdate-input');
+            if (birthdateInput.value && isValidDate(birthdateInput.value)) {
+                const [day, month, year] = birthdateInput.value.split('.');
+                document.getElementById('calendar-month').value = parseInt(month) - 1;
+                document.getElementById('calendar-year').value = year;
+                updateCalendar();
+                highlightSelectedDate(birthdateInput.value);
+            }
             calendar.classList.add('open');
         }
     }
@@ -444,11 +451,15 @@ function syncCalendarWithInput() {
     const month = document.getElementById('calendar-month').value;
     const year = document.getElementById('calendar-year').value;
     const birthdateInput = document.getElementById('birthdate-input');
-    const currentDay = birthdateInput.value.split('.')[0] || '';
-    if (currentDay) {
-        birthdateInput.value = `${currentDay}.${('0' + (parseInt(month) + 1)).slice(-2)}.${year}`;
-        updateCalendar();
-        highlightSelectedDate(birthdateInput.value);
+    
+    if (birthdateInput.value && isValidDate(birthdateInput.value)) {
+        const [day] = birthdateInput.value.split('.');
+        const newDate = `${day}.${String(parseInt(month) + 1).padStart(2, '0')}.${year}`;
+        if (isValidDate(newDate)) {
+            birthdateInput.value = newDate;
+            updateCalendar();
+            highlightSelectedDate(newDate);
+        }
     }
 }
 
@@ -526,4 +537,90 @@ function applySettings() {
 // Добавляем вызов применения настроек при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
     applySettings();
+});
+
+// Функция сохранения календаря
+async function saveCalendar() {
+    const birthdate = document.getElementById('birthdate-input').value;
+    if (!isValidDate(birthdate)) {
+        showError(translations[getCurrentLanguage()].invalidDate);
+        return;
+    }
+
+    try {
+        // Получаем оригинальный canvas
+        const canvas = document.getElementById('lifeCanvas');
+        
+        // Создаем временный canvas с белым фоном
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d');
+
+        // Устанавливаем размеры с учетом масштабирования
+        const scale = 2; // Увеличиваем разрешение для лучшего качества
+        tempCanvas.width = canvas.width * scale;
+        tempCanvas.height = canvas.height * scale;
+        
+        // Рисуем белый фон
+        tempCtx.fillStyle = '#FFFFFF';
+        tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+        
+        // Масштабируем контекст
+        tempCtx.scale(scale, scale);
+        
+        // Копируем содержимое основного canvas
+        tempCtx.drawImage(canvas, 0, 0);
+
+        // Конвертируем в изображение с максимальным качеством
+        const image = tempCanvas.toDataURL('image/png', 1.0);
+        
+        // Создаем PDF с правильной ориентацией
+        const pdf = new window.jspdf.jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4',
+            compress: true
+        });
+
+        // Получаем размеры A4 (210x297 мм)
+        const pageWidth = 210;
+        const pageHeight = 297;
+
+        // Вычисляем размеры изображения с сохранением пропорций
+        const aspectRatio = tempCanvas.width / tempCanvas.height;
+        let imgWidth = pageWidth - 20; // отступы по 10мм с каждой стороны
+        let imgHeight = imgWidth / aspectRatio;
+
+        // Проверяем, не выходит ли высота за пределы страницы
+        if (imgHeight > pageHeight - 20) {
+            imgHeight = pageHeight - 20;
+            imgWidth = imgHeight * aspectRatio;
+        }
+
+        // Центрируем изображение на странице
+        const x = (pageWidth - imgWidth) / 2;
+        const y = (pageHeight - imgHeight) / 2;
+
+        // Добавляем изображение
+        pdf.addImage(image, 'PNG', x, y, imgWidth, imgHeight);
+
+        // Сохраняем файл
+        pdf.save(`life-calendar-${birthdate}.pdf`);
+
+    } catch (error) {
+        console.error('Ошибка при сохранении PDF:', error);
+        showError(translations[getCurrentLanguage()].savingError);
+    }
+}
+
+// Обновляем переводы
+translations.ru.invalidDate = 'Сначала введите корректную дату рождения';
+translations.en.invalidDate = 'Please enter a valid birth date first';
+translations.ru.savingError = 'Ошибка при сохранении. Попробуйте еще раз.';
+translations.en.savingError = 'Error saving. Please try again.';
+
+// Добавляем обработчик после загрузки DOM
+document.addEventListener('DOMContentLoaded', function() {
+
+    // Добавляем обработчик для кнопки сохранения
+    document.getElementById('save-calendar-btn')?.addEventListener('click', saveCalendar);
 });

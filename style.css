@@ -256,6 +256,36 @@ canvas {
     transform: translateY(0);
 }
 
+.button--secondary {
+    background: var(--color-surface);
+    color: var(--color-primary);
+    border: 1px solid var(--color-primary);
+    font-weight: 500;
+    transition: all 0.2s ease;
+    margin-top: var(--spacing-sm); /* Добавляем отступ сверху */
+    cursor: pointer; /* Явно указываем, что это кликабельный элемент */
+}
+
+.button--secondary:hover {
+    background: var(--color-primary);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+
+.button--secondary:active {
+    transform: translateY(0);
+}
+
+/* Добавляем стили для disabled состояния */
+.button--secondary:disabled {
+    background: var(--color-border);
+    color: var(--color-text);
+    border-color: var(--color-border);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
 /* Футер */
 .footer {
     margin-top: var(--spacing-lg);
@@ -400,7 +430,7 @@ canvas {
     grid-template-columns: repeat(7, 1fr);
     gap: 4px;
     padding: 8px;
-    background: var(--color-surface);
+    background: var (--color-surface);
 }
 
 .calendar-date {
@@ -535,4 +565,49 @@ canvas {
 .hidden-content a:hover {
     color: var(--color-hover);
     text-decoration: underline;
+}
+
+/* Стили для печати */
+@media print {
+    body {
+        padding: 0;
+        margin: 0;
+        background: white;
+    }
+
+    .app {
+        max-width: 100%;
+    }
+
+    .header {
+        margin-bottom: 20px;
+    }
+
+    .settings,
+    .button,
+    .footer {
+        display: none !important;
+    }
+
+    .container {
+        display: block;
+    }
+
+    .calendar {
+        padding: 0;
+        margin: 0;
+        box-shadow: none;
+        background: white;
+    }
+
+    canvas {
+        max-width: 100%;
+        height: auto;
+        page-break-inside: avoid;
+    }
+
+    @page {
+        size: A4;
+        margin: 1cm;
+    }
 }
