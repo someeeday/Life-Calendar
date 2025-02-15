@@ -6,6 +6,12 @@ if (tg) {
 
     console.log("✅ Web App открыт в Telegram");
     console.log("🔹 initData:", tg.initData);
+
+    if (!tg.initDataUnsafe.user) {
+        console.warn("⚠ Telegram не передал данные пользователя.");
+    }
+} else {
+    console.warn("⚠ Web App открыт не через Telegram.");
 }
 
 // Конфигурация переводов
