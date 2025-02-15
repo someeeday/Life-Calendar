@@ -1,3 +1,6 @@
+// Инициализация Telegram Web App
+let tg = window.Telegram?.WebApp;
+
 // Конфигурация переводов
 const translations = {
     ru: {
@@ -318,11 +321,15 @@ function generateLifeCalendar() {
     saveSettings({ birthdate });
 
     // Если это Telegram WebApp - отправляем данные боту
-    if (window.Telegram && window.Telegram.WebApp) {
-        window.Telegram.WebApp.sendData(JSON.stringify({
-            type: 'register',
-            birthdate: birthdate
-        }));
+    if (tg) {
+        tg.MainButton.setText('Сохранить календарь');
+        tg.MainButton.show();
+        tg.MainButton.onClick(() => {
+            tg.sendData(JSON.stringify({
+                type: 'register',
+                birthdate: birthdate
+            }));
+        });
     }
 }
 
@@ -332,8 +339,8 @@ function onTelegramAuth(user) {
     localStorage.setItem('telegramUser', JSON.stringify(user));
     
     // Если мы в Telegram Web App, отправляем данные боту
-    if (window.Telegram && window.Telegram.WebApp) {
-        window.Telegram.WebApp.sendData(JSON.stringify({
+    if (tg) {
+        tg.sendData(JSON.stringify({
             type: 'auth',
             user: user
         }));
@@ -576,10 +583,10 @@ async function saveCalendar() {
 
     try {
         // Проверяем, находимся ли мы в Telegram WebApp
-        if (window.Telegram && window.Telegram.WebApp) {
+        if (tg) {
             // Для Telegram отправляем только дату рождения
             // Бот сам сгенерирует календарь на сервере
-            window.Telegram.WebApp.sendData(JSON.stringify({
+            tg.sendData(JSON.stringify({
                 type: 'generateCalendar',
                 birthdate: birthdate
             }));
@@ -658,4 +665,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Добавляем обработчик для кнопки сохранения
     document.getElementById('save-calendar-btn')?.addEventListener('click', saveCalendar);
+
+    if (tg) {
+        tg.ready();
+        // Если есть сохранённая дата, показываем кнопку
+        const birthdate = localStorage.getItem('birthdate');
+        if (birthdate && isValidDate(birthdate)) {
+            tg.MainButton.setText('Сохранить календарь');
+            tg.MainButton.show();
+        }
+    }
 });
