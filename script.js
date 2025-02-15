@@ -183,7 +183,7 @@ function createLifeGrid(livedWeeks = 0, totalYears = 91) {
     const ageTextPosition = 0;
     ctx.save();
     ctx.translate(padding - 45, padding + ageTextPosition);
-    ctx.rotate(-Math.PI / 2);
+    ctx.rotate(-90 * Math.PI / 180);
     ctx.textAlign = 'right';
     ctx.fillText(labels.age, 0, 0);
     ctx.restore();
@@ -548,75 +548,79 @@ async function saveCalendar() {
     }
 
     try {
-        // Получаем оригинальный canvas
+        // Проверяем, находимся ли мы в Telegram WebApp
+        if (window.Telegram && window.Telegram.WebApp) {
+            // Для Telegram отправляем только дату рождения
+            // Бот сам сгенерирует календарь на сервере
+            window.Telegram.WebApp.sendData(JSON.stringify({
+                type: 'generateCalendar',
+                birthdate: birthdate
+            }));
+            return;
+        }
+
+        // Для остальных случаев - обычное сохранение
         const canvas = document.getElementById('lifeCanvas');
-        
-        // Создаем временный canvas с белым фоном
         const tempCanvas = document.createElement('canvas');
         const tempCtx = tempCanvas.getContext('2d');
-
-        // Устанавливаем размеры с учетом масштабирования
-        const scale = 2; // Увеличиваем разрешение для лучшего качества
-        tempCanvas.width = canvas.width * scale;
-        tempCanvas.height = canvas.height * scale;
+        
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height;
         
         // Рисуем белый фон
         tempCtx.fillStyle = '#FFFFFF';
         tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-        
-        // Масштабируем контекст
-        tempCtx.scale(scale, scale);
-        
-        // Копируем содержимое основного canvas
         tempCtx.drawImage(canvas, 0, 0);
 
-        // Конвертируем в изображение с максимальным качеством
-        const image = tempCanvas.toDataURL('image/png', 1.0);
-        
-        // Создаем PDF с правильной ориентацией
-        const pdf = new window.jspdf.jsPDF({
-            orientation: 'portrait',
-            unit: 'mm',
-            format: 'a4',
-            compress: true
-        });
+        // Получаем PNG
+        const imageData = tempCanvas.toDataURL('image/png', 1.0);
 
-        // Получаем размеры A4 (210x297 мм)
-        const pageWidth = 210;
-        const pageHeight = 297;
-
-        // Вычисляем размеры изображения с сохранением пропорций
-        const aspectRatio = tempCanvas.width / tempCanvas.height;
-        let imgWidth = pageWidth - 20; // отступы по 10мм с каждой стороны
-        let imgHeight = imgWidth / aspectRatio;
-
-        // Проверяем, не выходит ли высота за пределы страницы
-        if (imgHeight > pageHeight - 20) {
-            imgHeight = pageHeight - 20;
-            imgWidth = imgHeight * aspectRatio;
+        // Для мобильных устройств
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            const link = document.createElement('a');
+            link.download = `life-calendar-${birthdate}.png`;
+            link.href = imageData;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            return;
         }
 
-        // Центрируем изображение на странице
-        const x = (pageWidth - imgWidth) / 2;
-        const y = (pageHeight - imgHeight) / 2;
+        // Для десктопа создаем PDF
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({
+            orientation: 'landscape',
+            unit: 'mm',
+            format: 'a4'
+        });
 
-        // Добавляем изображение
-        pdf.addImage(image, 'PNG', x, y, imgWidth, imgHeight);
+        const pageWidth = 297;
+        const pageHeight = 210;
+        const margin = 10;
+        const imgWidth = pageWidth - (margin * 2);
+        const imgHeight = pageHeight - (margin * 2);
 
-        // Сохраняем файл
+        pdf.addImage(imageData, 'PNG', margin, margin, imgWidth, imgHeight);
         pdf.save(`life-calendar-${birthdate}.pdf`);
 
     } catch (error) {
-        console.error('Ошибка при сохранении PDF:', error);
+        console.error('Error saving calendar:', error);
         showError(translations[getCurrentLanguage()].savingError);
     }
 }
 
 // Обновляем переводы
-translations.ru.invalidDate = 'Сначала введите корректную дату рождения';
-translations.en.invalidDate = 'Please enter a valid birth date first';
-translations.ru.savingError = 'Ошибка при сохранении. Попробуйте еще раз.';
-translations.en.savingError = 'Error saving. Please try again.';
+translations.ru = {
+    ...translations.ru,
+    savingError: 'Не удалось сохранить календарь. Попробуйте еще раз.',
+    saveSuccess: 'Календарь успешно сохранен'
+};
+
+translations.en = {
+    ...translations.en,
+    savingError: 'Failed to save calendar. Please try again.',
+    saveSuccess: 'Calendar saved successfully'
+};
 
 // Добавляем обработчик после загрузки DOM
 document.addEventListener('DOMContentLoaded', function() {
