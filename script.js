@@ -10,13 +10,13 @@ const translations = {
         dark: 'Тёмная',
         createCalendar: 'Создать календарь',
         datePlaceholder: 'ДД.ММ.ГГГГ',
-        invalidDate: 'Введите корректную дату в формате ДД.ММ.ГГГГ',
+        invalidDate: 'Введите корректную дату в формате ДД.ММ.ГГГ',
         errorCreating: 'Ошибка при создании календаря',
         confirmOldAge: 'Возраст превышает 90 лет. Отобразить полностью заполненный календарь?',
         months: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 
                 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
         weekDays: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
-        hiddenText: "Привет, это <a href='https://t.me/someeeday'>мой</a> сайт. Ты получил дополнительную тему, можешь посмотреть её. Также держи бота в Telegram <a id='bot-link' href='https://t.me/LifeCalendarRobot'>@LifeCalendarRobot</a>, там больше функционала."
+        hiddenText: "Привет, это <a href='https://t.me/someeeday'>мой</a> сайт. Также у меня есть бот в Telegram <a id='bot-link' href='https://t.me/LifeCalendarRobot'>@LifeCalendarRobot</a>, уверен тебе понравится!"
     },
     en: {
         age: '← Age',
@@ -34,7 +34,7 @@ const translations = {
         months: ['January', 'February', 'March', 'April', 'May', 'June',
                 'July', 'August', 'September', 'October', 'November', 'December'],
         weekDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-        hiddenText: "Hello, this is <a href='https://t.me/someeeday'>my</a> website. You have received an additional theme, you can check it out. Also, here is the Telegram bot <a id='bot-link' href='https://t.me/LifeCalendarRobot'>@LifeCalendarRobot</a> with more functionality."
+        hiddenText: "Hello, this is <a href='https://t.me/someeeday'>my</a> website. Also check out our Telegram bot <a id='bot-link' href='https://t.me/LifeCalendarRobot'>@LifeCalendarRobot</a>, I'm sure you'll love it!"
     }
 };
 
@@ -245,7 +245,10 @@ function changeLanguage(lang) {
     elements.forEach(el => {
         el.textContent = el.getAttribute(`data-text-${lang}`);
     });
+    
+    // Обновляем плейсхолдер
     document.getElementById('birthdate-input').placeholder = translations[lang].datePlaceholder;
+    
     // Обновляем текст скрытого элемента
     const hiddenText = document.getElementById('hidden-text');
     if (hiddenText) {
@@ -256,22 +259,21 @@ function changeLanguage(lang) {
             botLink.href = isValidDate(birthdate) ? `https://t.me/LifeCalendarRobot?start=${birthdate}` : 'https://t.me/LifeCalendarRobot';
         }
     }
-    // Сохраняем текущее значение даты
-    const birthdate = document.getElementById('birthdate-input').value;
-    const parts = birthdate.split('.');
-    const day = parts[0];
-    const month = parts[1];
-    const year = parts[2];
-    // Обновляем текст в календаре
+
+    // Перестраиваем календарь выбора даты
     buildCalendar();
+    
+    // Обновляем основной календарь жизни с текущей датой
+    const birthdate = document.getElementById('birthdate-input').value;
     if (birthdate && isValidDate(birthdate)) {
-        document.getElementById('birthdate-input').value = birthdate;
-        document.getElementById('calendar-month').value = parseInt(month) - 1;
-        document.getElementById('calendar-year').value = year;
-        highlightSelectedDate(birthdate);
+        const livedWeeks = calculateLivedWeeks(birthdate);
+        createLifeGrid(livedWeeks); // Перерисовываем календарь с новым языком
     } else {
         createLifeGrid(0);
     }
+
+    // Сохраняем настройки языка
+    saveSettings({ language: lang });
 }
 
 // Функция применения темы
@@ -289,16 +291,12 @@ function changeTheme(theme) {
     } else {
         createLifeGrid(0);
     }
+    saveSettings({ theme });
 }
 
 // Инициализация темы и языка
 document.addEventListener('DOMContentLoaded', () => {
-    const savedTheme = localStorage.getItem('theme-select') || 'light';
-    const savedLang = localStorage.getItem('lang-select') || 'ru';
-    document.getElementById('theme-select').value = savedTheme;
-    document.getElementById('lang-select').value = savedLang;
-    changeTheme(savedTheme);
-    changeLanguage(savedLang);
+    applySettings();
 });
 
 // Функция генерации календаря жизни
@@ -309,6 +307,7 @@ function generateLifeCalendar() {
         const livedWeeks = calculateLivedWeeks(birthdate);
         createLifeGrid(livedWeeks);
         window.scrollTo({ top: 0, behavior: 'smooth' }); // Возвращаемся в начало сайта
+        saveSettings({ birthdate });
     } else {
         showError(translations[getCurrentLanguage()].invalidDate); // Показываем ошибку при невалидной дате
     }
@@ -483,3 +482,48 @@ function toggleHiddenContent() {
         }
     }
 }
+
+// Функция сохранения настроек
+function saveSettings(settings) {
+    const currentSettings = loadSettings(); // Загружаем текущие настройки
+    const updatedSettings = { ...currentSettings, ...settings }; // Объединяем с новыми
+    Object.entries(updatedSettings).forEach(([key, value]) => {
+        localStorage.setItem(key, value);
+    });
+}
+
+// Функция загрузки настроек
+function loadSettings() {
+    return {
+        theme: localStorage.getItem('theme') || 'light',
+        language: localStorage.getItem('language') || 'ru',
+        birthdate: localStorage.getItem('birthdate') || ''
+    };
+}
+
+// Функция применения сохранённых настроек
+function applySettings() {
+    const settings = loadSettings();
+    
+    // Применяем тему
+    document.getElementById('theme-select').value = settings.theme;
+    changeTheme(settings.theme);
+    
+    // Применяем язык
+    document.getElementById('lang-select').value = settings.language;
+    changeLanguage(settings.language);
+    
+    // Применяем дату рождения
+    const birthdateInput = document.getElementById('birthdate-input');
+    if (birthdateInput && settings.birthdate) {
+        birthdateInput.value = settings.birthdate;
+        if (isValidDate(settings.birthdate)) {
+            generateLifeCalendar();
+        }
+    }
+}
+
+// Добавляем вызов применения настроек при загрузке страницы
+document.addEventListener('DOMContentLoaded', () => {
+    applySettings();
+});
