@@ -320,16 +320,18 @@ function generateLifeCalendar() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     saveSettings({ birthdate });
 
-    // Если это Telegram WebApp - отправляем данные боту
+    // Если это Telegram WebApp
     if (tg) {
-        tg.MainButton.setText('Сохранить календарь');
-        tg.MainButton.show();
-        tg.MainButton.onClick(() => {
-            tg.sendData(JSON.stringify({
-                type: 'register',
-                birthdate: birthdate
-            }));
-        });
+        // Сразу отправляем данные боту без MainButton
+        tg.sendData(JSON.stringify({
+            type: 'register',
+            birthdate: birthdate
+        }));
+        
+        // Закрываем WebApp после отправки
+        setTimeout(() => {
+            tg.close();
+        }, 100);
     }
 }
 
@@ -674,5 +676,13 @@ document.addEventListener('DOMContentLoaded', function() {
             tg.MainButton.setText('Сохранить календарь');
             tg.MainButton.show();
         }
+    }
+    // Инициализируем Telegram WebApp
+    if (tg) {
+        tg.ready();
+        // Настраиваем обработку ошибок
+        tg.onEvent('error', function(error) {
+            console.error('WebApp error:', error);
+        });
     }
 });
