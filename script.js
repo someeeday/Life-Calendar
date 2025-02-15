@@ -317,15 +317,25 @@ function generateLifeCalendar() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     saveSettings({ birthdate });
 
-    // Только для Telegram Web App
+    // Если это Telegram WebApp - отправляем данные боту
     if (window.Telegram && window.Telegram.WebApp) {
-        const webApp = window.Telegram.WebApp;
-        
-        // Отправляем данные боту
-        webApp.sendData(JSON.stringify({
-            type: 'message',
-            action: 'sendHello',
+        window.Telegram.WebApp.sendData(JSON.stringify({
+            type: 'register',
             birthdate: birthdate
+        }));
+    }
+}
+
+// Функция проверки авторизации Telegram
+function onTelegramAuth(user) {
+    // Сохраняем данные пользователя
+    localStorage.setItem('telegramUser', JSON.stringify(user));
+    
+    // Если мы в Telegram Web App, отправляем данные боту
+    if (window.Telegram && window.Telegram.WebApp) {
+        window.Telegram.WebApp.sendData(JSON.stringify({
+            type: 'auth',
+            user: user
         }));
     }
 }
