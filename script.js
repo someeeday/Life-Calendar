@@ -303,13 +303,27 @@ document.addEventListener('DOMContentLoaded', () => {
 function generateLifeCalendar() {
     const birthdate = document.getElementById('birthdate-input').value;
     if (isValidDate(birthdate)) {
-        hideError(); // Скрываем ошибку при валидной дате
+        hideError();
         const livedWeeks = calculateLivedWeeks(birthdate);
         createLifeGrid(livedWeeks);
-        window.scrollTo({ top: 0, behavior: 'smooth' }); // Возвращаемся в начало сайта
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         saveSettings({ birthdate });
+
+        // Если находимся в Telegram Web App, отправляем сообщение
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.sendData(JSON.stringify({
+                type: 'message',
+                action: 'sendHello',
+                birthdate: birthdate
+            }));
+            
+            window.Telegram.WebApp.showPopup({
+                title: translations[getCurrentLanguage()].calendarCreated,
+                message: translations[getCurrentLanguage()].checkMessages
+            });
+        }
     } else {
-        showError(translations[getCurrentLanguage()].invalidDate); // Показываем ошибку при невалидной дате
+        showError(translations[getCurrentLanguage()].invalidDate);
     }
 }
 
@@ -613,13 +627,17 @@ async function saveCalendar() {
 translations.ru = {
     ...translations.ru,
     savingError: 'Не удалось сохранить календарь. Попробуйте еще раз.',
-    saveSuccess: 'Календарь успешно сохранен'
+    saveSuccess: 'Календарь успешно сохранен',
+    calendarCreated: 'Календарь создан',
+    checkMessages: 'Проверьте сообщения от бота'
 };
 
 translations.en = {
     ...translations.en,
     savingError: 'Failed to save calendar. Please try again.',
-    saveSuccess: 'Calendar saved successfully'
+    saveSuccess: 'Calendar saved successfully',
+    calendarCreated: 'Calendar created',
+    checkMessages: 'Check bot messages'
 };
 
 // Добавляем обработчик после загрузки DOM
