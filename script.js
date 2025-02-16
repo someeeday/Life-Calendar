@@ -318,6 +318,15 @@ function generateLifeCalendar() {
     createLifeGrid(livedWeeks, totalYears);
     window.scrollTo({ top: 0, behavior: 'smooth' });
     saveSettings({ birthdate });
+
+    // Отправка данных боту
+    const data = {
+        birthdate: birthdate,
+        livedWeeks: livedWeeks,
+        theme: getCurrentTheme(),
+        language: getCurrentLanguage()
+    };
+    sendDataToBot(data);
 }
 
 // Функция для открытия и закрытия календаря
@@ -535,4 +544,31 @@ function applySettings() {
 // Добавляем вызов применения настроек при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
     applySettings();
+});
+
+// Функция для отправки данных на мини-бота
+function sendDataToBot(data) {
+    if (tg && tg.sendData) {
+        tg.sendData(JSON.stringify(data));
+    } else {
+        console.error('Telegram WebApp не поддерживает отправку данных.');
+    }
+}
+
+// Пример использования функции
+document.getElementById('settingsForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const birthdate = document.getElementById('birthdate-input').value;
+    if (isValidDate(birthdate)) {
+        const livedWeeks = calculateLivedWeeks(birthdate);
+        const data = {
+            birthdate: birthdate,
+            livedWeeks: livedWeeks,
+            theme: getCurrentTheme(),
+            language: getCurrentLanguage()
+        };
+        sendDataToBot(data);
+    } else {
+        showError(translations[getCurrentLanguage()].invalidDate);
+    }
 });
