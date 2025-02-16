@@ -329,6 +329,9 @@ function generateLifeCalendar() {
     sendDataToBot(data);
 }
 
+// Привязка функции к кнопке генерации календаря
+document.getElementById('createCalendarButton')?.addEventListener('click', generateLifeCalendar);
+
 // Функция для открытия и закрытия календаря
 function toggleCalendar() {
     const calendar = document.getElementById('custom-calendar');
@@ -548,8 +551,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Функция для отправки данных на мини-бота
 function sendDataToBot(data) {
+    console.log('Отправка данных на мини-бота:', data); // Логируем данные перед отправкой
     if (tg && tg.sendData) {
         tg.sendData(JSON.stringify(data));
+        console.log('Данные отправлены успешно');
     } else {
         console.error('Telegram WebApp не поддерживает отправку данных.');
     }
