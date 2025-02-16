@@ -330,7 +330,7 @@ function generateLifeCalendar() {
 }
 
 // Привязка функции к кнопке генерации календаря
-document.getElementById('createCalendarButton')?.addEventListener('click', generateLifeCalendar);
+document.getElementById('createCalendarButton')?.addEventListener('click', generateLifeCalendar);   
 
 // Функция для открытия и закрытия календаря
 function toggleCalendar() {
@@ -552,28 +552,28 @@ document.addEventListener('DOMContentLoaded', () => {
 // Функция для отправки данных на мини-бота
 function sendDataToBot(data) {
     console.log('Отправка данных на мини-бота:', data); // Логируем данные перед отправкой
-    if (tg && tg.sendData) {
-        tg.sendData(JSON.stringify(data));
-        console.log('Данные отправлены успешно');
+    if (tg) {
+        console.log('Telegram WebApp объект существует');
+        // Получаем ID пользователя из WebApp
+        const userId = tg.initDataUnsafe?.user?.id;
+        const userName = tg.initDataUnsafe?.user?.username;
+        
+        // Добавляем информацию о пользователе к отправляемым данным
+        const dataWithUser = {
+            ...data,
+            userId: userId,
+            userName: userName
+        };
+        
+        console.log('Данные с информацией о пользователе:', dataWithUser);
+        
+        if (tg.sendData) {
+            tg.sendData(JSON.stringify(dataWithUser));
+            console.log('Данные отправлены успешно');
+        } else {
+            console.error('Метод sendData не поддерживается Telegram WebApp.');
+        }
     } else {
-        console.error('Telegram WebApp не поддерживает отправку данных.');
+        console.error('Telegram WebApp объект не инициализирован.');
     }
 }
-
-// Пример использования функции
-document.getElementById('settingsForm')?.addEventListener('submit', function(e) {
-    e.preventDefault();
-    const birthdate = document.getElementById('birthdate-input').value;
-    if (isValidDate(birthdate)) {
-        const livedWeeks = calculateLivedWeeks(birthdate);
-        const data = {
-            birthdate: birthdate,
-            livedWeeks: livedWeeks,
-            theme: getCurrentTheme(),
-            language: getCurrentLanguage()
-        };
-        sendDataToBot(data);
-    } else {
-        showError(translations[getCurrentLanguage()].invalidDate);
-    }
-});
