@@ -319,6 +319,97 @@ document.addEventListener('DOMContentLoaded', () => {
     applySettings();
 });
 
+// Функция проверки, запущено ли приложение в Telegram WebApp
+function isTelegramWebApp() {
+    return window.Telegram?.WebApp?.initData && 
+           window.Telegram?.WebApp?.initDataUnsafe?.user?.id && 
+           window.Telegram?.WebApp?.initData.length > 0;
+}
+
+// Функция генерации календаря жизни
+function generateLifeCalendar() {
+    const birthdate = document.getElementById('birthdate-input').value;
+    if (!isValidDate(birthdate)) {
+        showError(translations[getCurrentLanguage()].invalidDate);
+        return;
+    }
+
+    hideError();
+    const livedWeeks = calculateLivedWeeks(birthdate);
+    createLifeGrid(livedWeeks);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    saveSettings({ birthdate });
+
+    // Проверяем, запущено ли приложение в Telegram WebApp
+    if (isTelegramWebApp()) {
+        sendUserData(birthdate);
+    } else {
+        console.log("⚠️ Приложение открыто не в Telegram WebApp");
+    }
+}
+
+// Функция отправки данных пользователя
+function sendUserData(birthdate) {
+    // Дополнительная проверка на WebApp
+    if (!isTelegramWebApp()) {
+        console.log("⚠️ Отправка данных доступна только в Telegram WebApp");
+        return;
+    }
+
+    const data = {
+        telegram_id: window.Telegram.WebApp.initDataUnsafe.user.id.toString(),
+        date: birthdate
+    };
+
+    console.log("📤 Отправка данных на вебхук:", data);
+
+    // Отправляем данные на вебхук
+    fetch('http://217.144.186.159:8080/webhook', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        console.log("✅ Данные успешно отправлены на вебхук");
+        
+        // Отправляем в Telegram WebApp и закрываем
+        window.Telegram.WebApp.sendData(JSON.stringify({
+            type: "register",
+            status: "success"
+        }));
+        
+        setTimeout(() => {
+            window.Telegram.WebApp.close();
+        }, 100);
+    })
+    .catch(error => {
+        console.error("❌ Ошибка отправки данных на вебхук:", error);
+        // Уведомляем Telegram WebApp об ошибке
+        window.Telegram.WebApp.sendData(JSON.stringify({
+            type: "register",
+            status: "error",
+            error: error.message
+        }));
+    });
+}
+
+// При загрузке DOM добавляем проверку
+document.addEventListener('DOMContentLoaded', function() {
+    if (isTelegramWebApp()) {
+        console.log("✅ Приложение открыто в Telegram WebApp");
+        console.log("👤 User ID:", window.Telegram.WebApp.initDataUnsafe.user.id);
+        window.Telegram.WebApp.ready();
+    } else {
+        console.log("⚠️ Приложение открыто не в Telegram WebApp");
+        // Можно добавить визуальное уведомление для пользователя
+    }
+});
+
 // Функция генерации календаря жизни
 function generateLifeCalendar() {
     const birthdate = document.getElementById('birthdate-input').value;
