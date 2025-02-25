@@ -16,6 +16,7 @@ export class Settings {
         this.setupEventListeners();
         this.updateAllTranslations();
         this.syncSelectsWithSettings();
+        this.setupLanguageAndThemeHandlers();
     }
 
     applyStoredSettings() {
@@ -37,6 +38,20 @@ export class Settings {
         // Слушаем системные изменения темы
         window.matchMedia('(prefers-color-scheme: dark)').addListener((e) => {
             this.handleSystemThemeChange(e.matches ? 'dark' : 'light');
+        });
+    }
+
+    setupLanguageAndThemeHandlers() {
+        // Обработчики для селектов языка и темы
+        const langSelect = document.getElementById('lang-select');
+        const themeSelect = document.getElementById('theme-select');
+
+        langSelect?.addEventListener('change', (e) => {
+            this.handleLanguageChange(e.target.value);
+        });
+
+        themeSelect?.addEventListener('change', (e) => {
+            this.handleThemeChange(e.target.value);
         });
     }
 

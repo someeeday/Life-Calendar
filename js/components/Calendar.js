@@ -1,5 +1,5 @@
-import { themes } from '../config/themes';
-import { translations } from '../config/translations';
+import { themes } from '../config/themes.js';
+import { translations } from '../config/translations.js';
 
 export class Calendar {
     constructor(selector) {

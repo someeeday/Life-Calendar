@@ -1,5 +1,5 @@
-import { translations } from '../config/translations';
-import { StorageService } from '../services/StorageService';
+import { translations } from '../config/translations.js';
+import { StorageService } from '../services/StorageService.js';
 
 export class DatePicker {
     #monthSelect;

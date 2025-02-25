@@ -43,8 +43,13 @@ class App {
 // Сделаем экземпляр приложения глобально доступным
 let app;
 
-// Инициализация приложения после загрузки DOM
+// Инициализация приложения после полной загрузки DOM
 document.addEventListener('DOMContentLoaded', () => {
+    // Создаем экземпляр приложения
     app = new App();
     window.app = app; // Для доступа из консоли
+    
+    // Добавляем глобальные функции для совместимости
+    window.changeLanguage = (lang) => app.components.settings.handleLanguageChange(lang);
+    window.changeTheme = (theme) => app.components.settings.handleThemeChange(theme);
 });
