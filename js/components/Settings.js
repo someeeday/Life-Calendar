@@ -68,20 +68,28 @@ export class Settings {
             // Сначала обновляем календарь
             const livedWeeks = this.calculateLivedWeeks(birthdate);
             window.app.components.calendar.draw(livedWeeks);
+            
+            // Сохраняем дату в любом случае
+            this.storage.setSetting('birthdate', birthdate);
 
-            // Потом пытаемся отправить данные в Telegram
+            // Пытаемся отправить данные в Telegram только если это WebApp
             const result = await window.app.telegram.sendUserData(birthdate);
             
-            if (result.success) {
-                this.hideError();
-                this.storage.setSetting('birthdate', birthdate);
-                this.emit('dateUpdated', birthdate);
-            } else {
-                this.showError(result.error || translations[this.language].errorCreating);
+            if (!result.browserMode) {
+                // Показываем результат только для Telegram WebApp
+                if (result.success) {
+                    this.hideError();
+                    this.emit('dateUpdated', birthdate);
+                } else {
+                    this.showError(result.error || translations[this.language].errorCreating);
+                }
             }
         } catch (error) {
             console.error('Ошибка:', error);
-            this.showError(translations[this.language].errorCreating);
+            // Показываем ошибку только в WebApp режиме
+            if (window.app.telegram.isTelegramWebApp()) {
+                this.showError(translations[this.language].errorCreating);
+            }
         }
     }
 
@@ -96,12 +104,26 @@ export class Settings {
         this.updateLanguage(lang);
         this.storage.setSetting('language', lang);
         this.emit('languageChanged', lang);
+        // Обновляем календарь с текущим языком
+        const birthdate = document.getElementById('birthdate-input')?.value;
+        if (birthdate) {
+            const livedWeeks = this.calculateLivedWeeks(birthdate);
+            window.app.components.calendar.setLanguage(lang);
+            window.app.components.calendar.draw(livedWeeks);
+        }
     }
 
     handleThemeChange(theme) {
         this.updateTheme(theme);
         this.storage.setSetting('theme', theme);
         this.emit('themeChanged', theme);
+        // Обновляем календарь с текущей темой
+        const birthdate = document.getElementById('birthdate-input')?.value;
+        if (birthdate) {
+            const livedWeeks = this.calculateLivedWeeks(birthdate);
+            window.app.components.calendar.updateTheme(theme);
+            window.app.components.calendar.draw(livedWeeks);
+        }
     }
 
     handleSystemThemeChange(theme) {

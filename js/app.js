@@ -34,6 +34,15 @@ class App {
     }
 
     setupEventListeners() {
+        // Обработчик изменения даты
+        this.components.datePicker.input?.addEventListener('change', () => {
+            const birthdate = this.components.datePicker.input.value;
+            if (birthdate && this.components.datePicker.isValidDate(birthdate)) {
+                const livedWeeks = this.components.settings.calculateLivedWeeks(birthdate);
+                this.components.calendar.draw(livedWeeks);
+            }
+        });
+
         // Обработчик для кнопки создания календаря
         document.getElementById('create-calendar-btn')?.addEventListener('click', () => {
             this.components.settings.handleFormSubmit();

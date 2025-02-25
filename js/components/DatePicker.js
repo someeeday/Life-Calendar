@@ -139,21 +139,26 @@ export class DatePicker {
     buildCalendar() {
         if (!this.calendar) return;
 
-        const currentDate = new Date();
-        const currentYear = currentDate.getFullYear();
-        const currentMonth = currentDate.getMonth();
         const lang = document.documentElement.lang || 'ru';
+        const currentDate = new Date();
+        
+        // Устанавливаем текущий месяц и год, если дата не выбрана
+        const [currentDay, currentMonth, currentYear] = this.input.value 
+            ? this.input.value.split('.').map(Number)
+            : [currentDate.getDate(), currentDate.getMonth() + 1, currentDate.getFullYear()];
 
         let calendarHtml = '<div class="calendar-header">';
         calendarHtml += '<select id="calendar-month">';
         translations[lang].months.forEach((month, i) => {
-            calendarHtml += `<option value="${i}">${month}</option>`;
+            const selected = i === (currentMonth - 1) ? 'selected' : '';
+            calendarHtml += `<option value="${i}" ${selected}>${month}</option>`;
         });
         calendarHtml += '</select>';
 
         calendarHtml += '<select id="calendar-year">';
-        for (let i = currentYear - 100; i <= currentYear; i++) {
-            calendarHtml += `<option value="${i}">${i}</option>`;
+        for (let i = currentDate.getFullYear() - 100; i <= currentDate.getFullYear(); i++) {
+            const selected = i === currentYear ? 'selected' : '';
+            calendarHtml += `<option value="${i}" ${selected}>${i}</option>`;
         }
         calendarHtml += '</select></div>';
 
@@ -181,6 +186,9 @@ export class DatePicker {
 
         const month = parseInt(this.#monthSelect?.value || '0', 10);
         const year = parseInt(this.#yearSelect?.value || new Date().getFullYear().toString(), 10);
+
+        // Добавляем проверку на валидный месяц и год
+        if (isNaN(month) || isNaN(year)) return;
 
         const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -211,7 +219,10 @@ export class DatePicker {
                 if (selectedDate) {
                     this.input.value = selectedDate;
                     this.highlightSelectedDate(selectedDate);
-                    this.toggleCalendar();
+                    this.closeCalendar();
+                    // Генерируем событие изменения для обновления календаря жизни
+                    const event = new Event('change');
+                    this.input.dispatchEvent(event);
                 }
             });
         });
