@@ -9,6 +9,7 @@ export class Settings {
         this.themeSelect = document.querySelector('#theme-select');
         this.storage = new StorageService();
         this.eventListeners = {};
+        this.errorElement = document.getElementById('birthdate-error');
     }
 
     init() {
@@ -67,13 +68,11 @@ export class Settings {
             const result = await window.app.telegram.sendUserData(birthdate);
             
             if (result.success) {
-                // Сохраняем дату в локальное хранилище
+                this.hideError();
                 this.storage.setSetting('birthdate', birthdate);
-                
-                // Обновляем календарь
                 this.emit('dateUpdated', birthdate);
             } else {
-                this.showError(result.error);
+                this.showError(result.error || 'Произошла ошибка при отправке данных');
             }
         } catch (error) {
             console.error('Ошибка отправки данных:', error);
@@ -149,6 +148,21 @@ export class Settings {
         `;
         notice.textContent = translations[settings.language].openBot;
         this.form.appendChild(notice);
+    }
+
+    showError(message) {
+        if (this.errorElement) {
+            this.errorElement.textContent = message;
+            this.errorElement.style.display = 'block';
+        } else {
+            console.error('Error:', message);
+        }
+    }
+
+    hideError() {
+        if (this.errorElement) {
+            this.errorElement.style.display = 'none';
+        }
     }
 
     // Система событий

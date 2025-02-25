@@ -24,6 +24,12 @@ class App {
         
         if (!this.telegram.isTelegramWebApp()) {
             this.components.settings.showBrowserNotice();
+            // Добавляем класс к body для стилизации
+            document.body.classList.add('browser-mode');
+            console.log('🌐 Приложение открыто в браузере');
+        } else {
+            document.body.classList.add('webapp-mode');
+            console.log('📱 Приложение открыто в Telegram WebApp');
         }
     }
 
