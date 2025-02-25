@@ -1,8 +1,8 @@
-import { TelegramService } from './services/TelegramService';
-import { Calendar } from './components/Calendar';
-import { DatePicker } from './components/DatePicker';
-import { Settings } from './components/Settings';
-import { Footer } from './components/Footer';
+import { TelegramService } from './services/TelegramService.js';
+import { Calendar } from './components/Calendar.js';
+import { DatePicker } from './components/DatePicker.js';
+import { Settings } from './components/Settings.js';
+import { Footer } from './components/Footer.js';
 
 class App {
     constructor() {
@@ -15,6 +15,7 @@ class App {
         };
         
         this.init();
+        this.setupEventListeners();
     }
 
     init() {
@@ -25,9 +26,25 @@ class App {
             this.components.settings.showBrowserNotice();
         }
     }
+
+    setupEventListeners() {
+        // Обработчик для кнопки создания календаря
+        document.getElementById('create-calendar-btn')?.addEventListener('click', () => {
+            this.components.settings.handleFormSubmit();
+        });
+
+        // Обработчик для ссылки автора
+        document.getElementById('author-link')?.addEventListener('click', () => {
+            this.components.footer.toggleHiddenContent();
+        });
+    }
 }
+
+// Сделаем экземпляр приложения глобально доступным
+let app;
 
 // Инициализация приложения после загрузки DOM
 document.addEventListener('DOMContentLoaded', () => {
-    window.app = new App();
+    app = new App();
+    window.app = app; // Для доступа из консоли
 });

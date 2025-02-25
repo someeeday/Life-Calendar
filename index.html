@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Open+Sans:wght@400;600;700&family=Lato:wght@400;700&display=swap">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="style.css"> <!-- Изменен путь -->
 </head>
 <body>
     <div class="app">
@@ -82,8 +82,7 @@
                     
                         <button type="button" 
                                 class="button button--primary" 
-                                onclick="generateLifeCalendar()" 
-                                id="create-calendar-btn"
+                                id="create-calendar-btn"  <!-- Убран onclick -->
                                 data-text-ru="Создать календарь" 
                                 data-text-en="Create calendar">
                             Создать календарь
@@ -99,7 +98,7 @@
         <footer class="footer">
             <div class="footer__content">
                 <span class="footer__text">Created by</span>
-                <a class="clickable-link" onclick="toggleHiddenContent()">@someeeday</a>
+                <a class="clickable-link" id="author-link">@someeeday</a> <!-- Убран onclick -->
             </div>
             <div id="hidden-content" style="display: none;" class="hidden-content">
                 <p id="hidden-text"></p>
