@@ -1,0 +1,42 @@
+export const translations = {
+    ru: {
+        age: '← Возраст',
+        weeks: 'Недели года →',
+        language: 'Язык',
+        theme: 'Тема',
+        birthdate: 'Дата рождения',
+        light: 'Светлая',
+        dark: 'Тёмная',
+        createCalendar: 'Создать календарь',
+        datePlaceholder: 'ДД.ММ.ГГГГ',
+        invalidDate: 'Введите корректную дату в формате ДД.ММ.ГГГ',
+        errorCreating: 'Ошибка при создании календаря',
+        confirmOldAge: 'Возраст превышает 90 лет. Отобразить полностью заполненный календарь?',
+        months: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 
+                'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
+        weekDays: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
+        hiddenText: "Привет, это <a href='https://t.me/someeeday'>мой</a> сайт. Также у меня есть бот в Telegram <a id='bot-link' href='https://t.me/LifeCalendarRobot'>@LifeCalendarRobot</a>, уверен тебе понравится!",
+        notFromBot: 'Приложение не из бота',
+        openBot: 'Чтобы получать уведомления, откройте приложение через бота @LifeCalendarRobot'
+    },
+    en: {
+        age: '← Age',
+        weeks: 'Weeks of Year →',
+        language: 'Language',
+        theme: 'Theme',
+        birthdate: 'Birth Date',
+        light: 'Light',
+        dark: 'Dark',
+        createCalendar: 'Create Calendar',
+        datePlaceholder: 'DD.MM.YYYY',
+        invalidDate: 'Enter a valid date in DD.MM.YYYY format',
+        errorCreating: 'Error creating calendar',
+        confirmOldAge: 'Age exceeds 90 years. Show fully filled calendar?',
+        months: ['January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'],
+        weekDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        hiddenText: "Hello, this is <a href='https://t.me/someeeday'>my</a> website. Also check out our Telegram bot <a id='bot-link' href='https://t.me/LifeCalendarRobot'>@LifeCalendarRobot</a>, I'm sure you'll love it!",
+        notFromBot: 'App not from bot',
+        openBot: 'To receive notifications, open the app through @LifeCalendarRobot bot'
+    }
+};
