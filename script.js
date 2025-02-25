@@ -424,45 +424,60 @@ function generateLifeCalendar() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     saveSettings({ birthdate });
 
-    // Если это Telegram WebApp
-    if (tg) {
+    // Отправляем данные только если это Telegram WebApp и есть инициализированный пользователь
+    if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
         sendUserData(birthdate);
     }
 }
 
 // Функция отправки данных пользователя
 function sendUserData(birthdate) {
-    if (tg && tg.initData) {
-        const data = {
-            type: "register",
-            birthdate: birthdate,
-            initData: tg.initData // Добавляем initData
-        };
+    // Дополнительная проверка на наличие WebApp и пользователя
+    if (!window.Telegram?.WebApp?.initDataUnsafe?.user) {
+        console.log("⚠ Отправка данных доступна только в Telegram WebApp");
+        return;
+    }
 
-        console.log("📤 Отправка данных в бота:", data);
-        tg.sendData(JSON.stringify(data)); // Отправляем в бота
+    const data = {
+        telegram_id: window.Telegram.WebApp.initDataUnsafe.user.id.toString(),
+        date: birthdate
+    };
+
+    // Отправляем данные на вебхук
+    fetch('http://217.144.186.159:8080/webhook', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        console.log("✅ Данные успешно отправлены на вебхук");
         
-        // Закрываем WebApp после отправки
-        setTimeout(() => {
-            tg.close();
-        }, 100);
-    } else {
-        console.warn("⚠ Данные не отправлены, так как Web App не открыт в Telegram.");
-    }
-}
-
-// Функция проверки авторизации Telegram
-function onTelegramAuth(user) {
-    // Сохраняем данные пользователя
-    localStorage.setItem('telegramUser', JSON.stringify(user));
-    
-    // Если мы в Telegram Web App, отправляем данные боту
-    if (tg) {
-        tg.sendData(JSON.stringify({
-            type: 'auth',
-            user: user
+        // Отправляем данные в Telegram WebApp
+        window.Telegram.WebApp.sendData(JSON.stringify({
+            type: "register",
+            status: "success"
         }));
-    }
+        
+        // Закрываем WebApp после успешной отправки
+        setTimeout(() => {
+            window.Telegram.WebApp.close();
+        }, 100);
+    })
+    .catch(error => {
+        console.error("❌ Ошибка отправки данных на вебхук:", error);
+        
+        // Уведомляем Telegram WebApp об ошибке
+        window.Telegram.WebApp.sendData(JSON.stringify({
+            type: "register",
+            status: "error",
+            error: error.message
+        }));
+    });
 }
 
 // Функция для открытия и закрытия календаря
