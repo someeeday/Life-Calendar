@@ -19,12 +19,22 @@ class App {
     }
 
     init() {
+        // Сначала сохраняем ссылку на приложение глобально
+        window.app = this;
+        
+        // Инициализируем базовые компоненты
         this.telegram.init();
-        Object.values(this.components).forEach(component => component.init());
+        this.components.calendar.init();
+        
+        // Затем инициализируем настройки, которые восстановят состояние календаря
+        this.components.settings.init();
+        
+        // Инициализируем оставшиеся компоненты
+        this.components.datePicker.init();
+        this.components.footer.init();
         
         if (!this.telegram.isTelegramWebApp()) {
             this.components.settings.showBrowserNotice();
-            // Добавляем класс к body для стилизации
             document.body.classList.add('browser-mode');
             console.log('🌐 Приложение открыто в браузере');
         } else {
@@ -48,9 +58,9 @@ class App {
             this.components.settings.handleFormSubmit();
         });
 
-        // Обработчик для ссылки автора
-        document.getElementById('author-link')?.addEventListener('click', () => {
-            this.components.footer.toggleHiddenContent();
+        // Обработчик для ссылки автора - используем handleLinkClick вместо toggleHiddenContent
+        document.getElementById('author-link')?.addEventListener('click', (e) => {
+            this.components.footer.handleLinkClick(e);
         });
     }
 }
@@ -62,9 +72,8 @@ let app;
 document.addEventListener('DOMContentLoaded', () => {
     // Создаем экземпляр приложения
     app = new App();
-    window.app = app; // Для доступа из консоли
     
-    // Добавляем глобальные функции для совместимости
+    // Эти функции теперь можно вызывать, т.к. window.app уже существует
     window.changeLanguage = (lang) => app.components.settings.handleLanguageChange(lang);
     window.changeTheme = (theme) => app.components.settings.handleThemeChange(theme);
 });

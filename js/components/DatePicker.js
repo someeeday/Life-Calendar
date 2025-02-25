@@ -96,6 +96,8 @@ export class DatePicker {
             this.closeCalendar();
         } else {
             this.openCalendar();
+            // Скрываем ошибку при открытии календаря
+            this.hideError();
         }
     }
 
@@ -275,15 +277,37 @@ export class DatePicker {
     }
 
     #setCalendarListeners() {
+        // Обработчики изменения месяца и года
         this.#monthSelect?.addEventListener('change', () => {
             this.updateCalendarDates();
-            this.emitChangeEvent();
+            const selectedDate = this.getSelectedDateFromCalendar();
+            if (selectedDate) {
+                this.input.value = selectedDate;
+                this.emitChangeEvent();
+            }
         });
 
         this.#yearSelect?.addEventListener('change', () => {
             this.updateCalendarDates();
-            this.emitChangeEvent();
+            const selectedDate = this.getSelectedDateFromCalendar();
+            if (selectedDate) {
+                this.input.value = selectedDate;
+                this.emitChangeEvent();
+            }
         });
+    }
+
+    // Новый метод для получения выбранной даты из текущих значений селектов
+    getSelectedDateFromCalendar() {
+        const month = parseInt(this.#monthSelect?.value || '0', 10);
+        const year = parseInt(this.#yearSelect?.value || new Date().getFullYear().toString(), 10);
+        const day = this.input.value ? parseInt(this.input.value.split('.')[0], 10) : 1;
+
+        // Проверяем валидность дня для выбранного месяца и года
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const validDay = Math.min(day, daysInMonth);
+
+        return `${String(validDay).padStart(2, '0')}.${String(month + 1).padStart(2, '0')}.${year}`;
     }
 
     emitChangeEvent() {

@@ -4,35 +4,50 @@ import { StorageService } from '../services/StorageService.js';
 export class Footer {
     constructor(selector) {
         this.footer = document.querySelector(selector);
-        this.hiddenContent = document.querySelector('#hidden-content');
-        this.hiddenText = document.querySelector('#hidden-text');
+        this.hiddenContent = document.getElementById('hidden-content');
+        this.hiddenText = document.getElementById('hidden-text');
+        this.authorLink = document.querySelector('.clickable-link');
+        this.isHidden = true;
         this.storage = new StorageService();
     }
 
     init() {
-        this.setupEventListeners();
+        if (!this.footer || !this.hiddenContent || !this.hiddenText || !this.authorLink) {
+            return;
+        }
+
+        // Начальное состояние
+        this.hiddenContent.style.display = 'none';
+        
+        // Больше не добавляем обработчик здесь, так как он добавляется в App.js
     }
 
-    setupEventListeners() {
-        document.querySelector('.clickable-link')?.addEventListener('click', 
-            () => this.toggleHiddenContent());
+    updateContent(lang) {
+        if (!this.hiddenContent || !this.hiddenText) return;
+        
+        const settings = this.storage.loadSettings();
+        this.hiddenText.innerHTML = translations[lang || settings.language].hiddenText;
     }
 
-    toggleHiddenContent() {
-        try {
-            if (this.hiddenContent && this.hiddenText) {
-                const isHidden = this.hiddenContent.style.display === 'none';
-                this.hiddenContent.style.display = isHidden ? 'block' : 'none';
-                
-                const settings = this.storage.loadSettings();
-                this.hiddenText.innerHTML = translations[settings.language].hiddenText;
-                
-                if (isHidden) {
-                    this.hiddenContent.scrollIntoView({ behavior: 'smooth' });
-                }
-            }
-        } catch (error) {
-            console.error('Ошибка переключения скрытого контента:', error);
+    handleLinkClick(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        this.isHidden = !this.isHidden;
+        
+        // Получаем настройки
+        const settings = this.storage.loadSettings();
+        const currentLang = settings.language || 'ru';
+
+        // Обновляем состояние контента
+        this.hiddenContent.style.display = this.isHidden ? 'none' : 'block';
+        
+        // Обновляем текст только при показе
+        if (!this.isHidden) {
+            this.updateContent(currentLang);
+            setTimeout(() => {
+                this.hiddenContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
         }
     }
 }

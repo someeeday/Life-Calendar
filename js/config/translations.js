@@ -8,16 +8,15 @@ export const translations = {
         light: 'Светлая',
         dark: 'Тёмная',
         createCalendar: 'Создать календарь',
-        datePlaceholder: 'ДД.ММ.ГГГГ',
-        invalidDate: 'Введите корректную дату в формате ДД.ММ.ГГГ',
+        datePlaceholder: 'ДД.ММ.ГГГ',
+        invalidDate: 'Пожалуйста, введите дату рождения',
         errorCreating: 'Ошибка при создании календаря',
         confirmOldAge: 'Возраст превышает 90 лет. Отобразить полностью заполненный календарь?',
         months: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 
                 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
         weekDays: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
-        hiddenText: "Привет, это <a href='https://t.me/someeeday'>мой</a> сайт. Также у меня есть бот в Telegram <a id='bot-link' href='https://t.me/LifeCalendarRobot'>@LifeCalendarRobot</a>, уверен тебе понравится!",
-        notFromBot: 'Приложение не из бота',
-        openBot: 'Чтобы получать уведомления, откройте приложение через бота @LifeCalendarRobot'
+        hiddenText: "Хочешь обсудить проект или есть идеи для улучшения? Напиши мне <a href='https://t.me/someeeday'>в телеграм</a>. А еще можешь заглянуть в <a id='bot-link' href='https://t.me/LifeCalendarRobot'>бота</a> — там больше интересного",
+        openBot: 'Также советую зайти в моего бота @LifeCalendarRobot, постепенно буду добавлять новые фичи'
     },
     en: {
         age: '← Age',
@@ -29,14 +28,13 @@ export const translations = {
         dark: 'Dark',
         createCalendar: 'Create Calendar',
         datePlaceholder: 'DD.MM.YYYY',
-        invalidDate: 'Enter a valid date in DD.MM.YYYY format',
+        invalidDate: 'Please enter your birth date',
         errorCreating: 'Error creating calendar',
         confirmOldAge: 'Age exceeds 90 years. Show fully filled calendar?',
         months: ['January', 'February', 'March', 'April', 'May', 'June',
                 'July', 'August', 'September', 'October', 'November', 'December'],
         weekDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-        hiddenText: "Hello, this is <a href='https://t.me/someeeday'>my</a> website. Also check out our Telegram bot <a id='bot-link' href='https://t.me/LifeCalendarRobot'>@LifeCalendarRobot</a>, I'm sure you'll love it!",
-        notFromBot: 'App not from bot',
-        openBot: 'To receive notifications, open the app through @LifeCalendarRobot bot'
+        hiddenText: "Want to discuss the project or have ideas for improvements? <a href='https://t.me/someeeday'>Message me</a> on Telegram. And don't forget to check out my <a id='bot-link' href='https://t.me/LifeCalendarRobot'>bot</a> with new features",
+        openBot: 'Also check out my bot @LifeCalendarRobot, I will be adding new features over time'
     }
 };

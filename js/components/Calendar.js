@@ -46,6 +46,9 @@ export class Calendar {
     draw(livedWeeks = 0) {
         if (!this.ctx) return;
 
+        // Сохраняем livedWeeks в атрибут canvas для восстановления при ресайзе
+        this.canvas.setAttribute('data-lived-weeks', livedWeeks);
+
         const colors = themes[this.theme];
         const labels = translations[this.language];
 
@@ -137,12 +140,22 @@ export class Calendar {
 
     #setupResizeHandler() {
         let resizeTimeout;
+        let lastLivedWeeks;
+
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimeout);
+            
+            // Сохраняем текущие livedWeeks перед ресайзом
+            const canvas = document.querySelector('#lifeCanvas');
+            if (canvas) {
+                lastLivedWeeks = canvas.getAttribute('data-lived-weeks') || 0;
+            }
+
             resizeTimeout = setTimeout(() => {
                 this.setupCanvas();
-                this.draw();
-            }, 250);
+                // Перерисовываем с сохраненными livedWeeks
+                this.draw(parseInt(lastLivedWeeks));
+            }, 100);
         });
     }
 }
