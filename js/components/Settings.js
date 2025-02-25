@@ -60,11 +60,16 @@ export class Settings {
         const birthdate = document.getElementById('birthdate-input')?.value;
         
         if (!birthdate) {
-            this.showError('Введите дату рождения');
+            this.showError(translations[this.language].invalidDate);
             return;
         }
 
         try {
+            // Сначала обновляем календарь
+            const livedWeeks = this.calculateLivedWeeks(birthdate);
+            window.app.components.calendar.draw(livedWeeks);
+
+            // Потом пытаемся отправить данные в Telegram
             const result = await window.app.telegram.sendUserData(birthdate);
             
             if (result.success) {
@@ -72,12 +77,19 @@ export class Settings {
                 this.storage.setSetting('birthdate', birthdate);
                 this.emit('dateUpdated', birthdate);
             } else {
-                this.showError(result.error || 'Произошла ошибка при отправке данных');
+                this.showError(result.error || translations[this.language].errorCreating);
             }
         } catch (error) {
-            console.error('Ошибка отправки данных:', error);
-            this.showError('Произошла ошибка при отправке данных');
+            console.error('Ошибка:', error);
+            this.showError(translations[this.language].errorCreating);
         }
+    }
+
+    calculateLivedWeeks(birthdate) {
+        const parts = birthdate.split('.');
+        const birthDate = new Date(parts[2], parts[1] - 1, parts[0]);
+        const currentDate = new Date();
+        return Math.floor((currentDate - birthDate) / (1000 * 60 * 60 * 24 * 7));
     }
 
     handleLanguageChange(lang) {
@@ -115,9 +127,17 @@ export class Settings {
 
     updateAllTranslations() {
         const lang = document.documentElement.lang;
+        // Обновляем все элементы с атрибутами перевода
         document.querySelectorAll('[data-text-ru], [data-text-en]').forEach(el => {
             const text = el.getAttribute(`data-text-${lang}`);
-            if (text) el.textContent = text;
+            if (text) {
+                // Для кнопок и других элементов
+                if (el.tagName === 'BUTTON') {
+                    el.textContent = text;
+                } else {
+                    el.textContent = text;
+                }
+            }
         });
 
         // Обновляем плейсхолдеры
