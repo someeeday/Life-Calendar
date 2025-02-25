@@ -71,11 +71,15 @@ body {
 
 /* Структура приложения */
 .app {
-    max-width: 1800px;
-    margin: 0 auto;
-    min-height: 100vh;  /* Важно для прижатия футера */
     display: flex;
     flex-direction: column;
+    min-height: 100vh;
+    margin: 0 auto;
+    max-width: 1800px;
+}
+
+.main {
+    flex: 1 0 auto;
 }
 
 .header {
@@ -89,9 +93,11 @@ body {
     color: var(--color-text);
 }
 
+/* Обновляем отступы контейнера */
 .container {
     display: flex;
     gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-sm); /* Уменьшили нижний отступ */
 }
 
 /* Панель настроек */
@@ -297,37 +303,29 @@ canvas {
 
 /* Футер */
 .footer {
-    width: 100%;
-    padding: 1rem;
-    margin-top: auto;  /* Важно для прижатия к низу */
+    flex-shrink: 0;
+    padding: var(--spacing-sm) 0; /* Уменьшили padding */
+    margin-top: var(--spacing-sm); /* Уменьшили margin-top */
     text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
 }
 
 .footer__content {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+    font-size: 14px;
+    color: var(--color-text);
+    opacity: 0.8;
 }
 
-.footer__text {
-    color: var(--text-color);
+.footer__link {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
 }
 
-.clickable-link {
-    cursor: pointer;
-    color: var(--text-color);
-    text-decoration: underline;
-}
-
-.hidden-content {
-    margin-top: 1rem;
-    padding: 1rem;
-    border-radius: 0.5rem;
-    background: var(--background-color);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.footer__link:hover {
+    color: var(--color-hover);
+    text-decoration: none;
+    opacity: 0.9;
 }
 
 /* Мобильная версия и адаптив */

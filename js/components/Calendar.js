@@ -38,8 +38,8 @@ export class Calendar {
     }
 
     calculateDimensions() {
-        const totalWidth = this.weeksPerYear * (this.cellSize + this.cellGap) + this.padding * 2;
-        const totalHeight = this.totalYears * (this.cellSize + this.cellGap) + this.padding * 2;
+        const totalWidth = this.weeksPerYear * (this.cellSize + this.cellGap) + this.padding + (this.padding / 2);
+        const totalHeight = this.totalYears * (this.cellSize + this.cellGap) + this.padding + (this.padding / 2);
         return { width: totalWidth, height: totalHeight };
     }
 
