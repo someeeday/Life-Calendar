@@ -4,7 +4,7 @@ import { translations } from '../config/translations.js';
 export class Calendar {
     constructor(selector) {
         this.canvas = document.querySelector(selector);
-        this.ctx = this.canvas?.getContext('2d');
+        this.ctx = this.canvas?.getContext('2d', { alpha: false });
         this.theme = 'light';
         this.language = 'ru';
         
@@ -16,6 +16,14 @@ export class Calendar {
         this.padding = this.isMobile ? 60 : 80;
         this.fontSize = this.isMobile ? 11 : 12;
         this.cellGap = this.isMobile ? 1 : 2;
+        
+        // Анимация последней недели
+        this.animationFrame = null;
+        this.lastWeekOpacity = 0.7; // Начальная прозрачность
+        this.pulseDirection = -1; // -1 = затухание, 1 = усиление
+        this.pulseSpeed = 0.003; // Скорость пульсации
+        this.minOpacity = 0.3; // Минимальная прозрачность
+        this.maxOpacity = 1.0; // Максимальная прозрачность
     }
 
     init() {
@@ -46,6 +54,12 @@ export class Calendar {
     draw(livedWeeks = 0) {
         if (!this.ctx) return;
 
+        // Отменяем предыдущую анимацию
+        if (this.animationFrame) {
+            cancelAnimationFrame(this.animationFrame);
+            this.animationFrame = null;
+        }
+
         // Сохраняем livedWeeks в атрибут canvas для восстановления при ресайзе
         this.canvas.setAttribute('data-lived-weeks', livedWeeks);
 
@@ -61,6 +75,11 @@ export class Calendar {
         
         // Отрисовка сетки
         this.drawGrid(livedWeeks, colors);
+        
+        // Запускаем анимацию последней недели, если есть прожитые недели
+        if (livedWeeks > 0) {
+            this.animateLastWeek(livedWeeks, colors);
+        }
     }
 
     drawLabels(labels, colors) {
@@ -120,42 +139,187 @@ export class Calendar {
             const x = this.padding + col * (this.cellSize + this.cellGap);
             const y = this.padding + row * (this.cellSize + this.cellGap);
             
-            this.ctx.fillStyle = week < livedWeeks ? colors.lived : colors.future;
+            // Определяем, это обычная синяя клетка или последняя прожитая неделя
+            const isLastLivedWeek = (week === livedWeeks - 1);
+            const isFilled = week < livedWeeks;
+            
+            this.ctx.fillStyle = isFilled ? colors.lived : colors.future;
             this.ctx.beginPath();
             this.ctx.roundRect(x, y, this.cellSize, this.cellSize, this.cellSize * 0.15);
             this.ctx.fill();
-            this.ctx.stroke();
+            
+            // Добавляем обводку только для незаполненных (серых) клеток
+            if (!isFilled) {
+                this.ctx.stroke();
+            }
         }
+    }
+
+    // Новый метод для анимации последней недели
+    animateLastWeek(livedWeeks, colors) {
+        // Получаем координаты последней недели
+        const col = (livedWeeks - 1) % this.weeksPerYear;
+        const row = Math.floor((livedWeeks - 1) / this.weeksPerYear);
+        const x = this.padding + col * (this.cellSize + this.cellGap);
+        const y = this.padding + row * (this.cellSize + this.cellGap);
+        
+        const animate = () => {
+            // Изменяем прозрачность в зависимости от направления
+            this.lastWeekOpacity += this.pulseDirection * this.pulseSpeed;
+            
+            // Меняем направление при достижении пределов
+            if (this.lastWeekOpacity <= this.minOpacity) {
+                this.lastWeekOpacity = this.minOpacity;
+                this.pulseDirection = 1; // Начинаем усиление
+            } else if (this.lastWeekOpacity >= this.maxOpacity) {
+                this.lastWeekOpacity = this.maxOpacity;
+                this.pulseDirection = -1; // Начинаем затухание
+            }
+            
+            // Очищаем только область последней клетки для оптимизации
+            this.ctx.fillStyle = themes[this.theme].background;
+            this.ctx.fillRect(x - 1, y - 1, this.cellSize + 2, this.cellSize + 2);
+            
+            // Рисуем последнюю неделю с текущей прозрачностью
+            this.ctx.save();
+            this.ctx.globalAlpha = this.lastWeekOpacity;
+            this.ctx.fillStyle = colors.lived;
+            this.ctx.beginPath();
+            this.ctx.roundRect(x, y, this.cellSize, this.cellSize, this.cellSize * 0.15);
+            this.ctx.fill();
+            this.ctx.restore();
+            
+            // Продолжаем анимацию
+            this.animationFrame = requestAnimationFrame(animate);
+        };
+        
+        // Запускаем анимацию
+        this.animationFrame = requestAnimationFrame(animate);
     }
 
     updateTheme(theme) {
         this.theme = theme;
-        this.draw();
+        
+        // Перерисовываем с сохранением текущего состояния календаря
+        const livedWeeks = parseInt(this.canvas?.getAttribute('data-lived-weeks') || '0');
+        this.draw(livedWeeks);
     }
 
     setLanguage(lang) {
         this.language = lang;
-        this.draw();
+        
+        // Перерисовываем с сохранением текущего состояния календаря
+        const livedWeeks = parseInt(this.canvas?.getAttribute('data-lived-weeks') || '0');
+        this.draw(livedWeeks);
     }
 
     #setupResizeHandler() {
         let resizeTimeout;
-        let lastLivedWeeks;
 
         window.addEventListener('resize', () => {
+            // Отменяем анимацию при начале ресайза
+            if (this.animationFrame) {
+                cancelAnimationFrame(this.animationFrame);
+                this.animationFrame = null;
+            }
+            
             clearTimeout(resizeTimeout);
             
             // Сохраняем текущие livedWeeks перед ресайзом
-            const canvas = document.querySelector('#lifeCanvas');
-            if (canvas) {
-                lastLivedWeeks = canvas.getAttribute('data-lived-weeks') || 0;
-            }
+            const livedWeeks = parseInt(this.canvas?.getAttribute('data-lived-weeks') || '0');
 
             resizeTimeout = setTimeout(() => {
                 this.setupCanvas();
                 // Перерисовываем с сохраненными livedWeeks
-                this.draw(parseInt(lastLivedWeeks));
+                this.draw(livedWeeks);
             }, 100);
         });
+    }
+
+    /**
+     * Метод для добавления маркера события на определенную неделю
+     * @param {Object} event - Информация о событии
+     * @param {number} event.week - Номер недели
+     * @param {string} event.color - Цвет события (hex)
+     * @param {string} event.title - Название события
+     */
+    addEventMarker(event) {
+        if (!event || !event.week) return;
+        
+        const col = event.week % this.weeksPerYear;
+        const row = Math.floor(event.week / this.weeksPerYear);
+        const x = this.padding + col * (this.cellSize + this.cellGap);
+        const y = this.padding + row * (this.cellSize + this.cellGap);
+        
+        // Рисуем маркер события (маленький цветной кружок в углу клетки)
+        this.ctx.save();
+        this.ctx.fillStyle = event.color || '#FF5722';
+        this.ctx.beginPath();
+        this.ctx.arc(
+            x + this.cellSize - 3, 
+            y + 3, 
+            2, 
+            0, 
+            Math.PI * 2
+        );
+        this.ctx.fill();
+        this.ctx.restore();
+    }
+    
+    /**
+     * Рисует линии через определённые промежутки лет для визуального разделения
+     * (например, каждые 10 лет)
+     */
+    drawDecadeLines(colors) {
+        const decadeYears = 10; // Периодичность линий
+        this.ctx.save();
+        this.ctx.strokeStyle = colors.grid;
+        this.ctx.lineWidth = 1;
+        this.ctx.setLineDash([4, 4]); // Пунктирная линия
+        
+        for (let year = decadeYears; year < this.totalYears; year += decadeYears) {
+            const y = this.padding + year * (this.cellSize + this.cellGap);
+            
+            this.ctx.beginPath();
+            this.ctx.moveTo(this.padding - 10, y - this.cellGap/2);
+            this.ctx.lineTo(this.padding + this.weeksPerYear * (this.cellSize + this.cellGap), y - this.cellGap/2);
+            this.ctx.stroke();
+        }
+        
+        this.ctx.restore();
+    }
+    
+    /**
+     * Добавляет подсветку для текущего возраста (строки)
+     */
+    highlightCurrentAge(livedWeeks, colors) {
+        if (!livedWeeks) return;
+        
+        const currentYear = Math.floor(livedWeeks / this.weeksPerYear);
+        const y = this.padding + currentYear * (this.cellSize + this.cellGap);
+        
+        // Подсвечиваем текущий год
+        this.ctx.save();
+        this.ctx.fillStyle = colors.text;
+        this.ctx.globalAlpha = 0.05;
+        this.ctx.fillRect(
+            this.padding - 10, 
+            y - this.cellGap, 
+            this.weeksPerYear * (this.cellSize + this.cellGap) + 15, 
+            this.cellSize + this.cellGap * 2
+        );
+        this.ctx.restore();
+        
+        // Выделяем год в подписи
+        this.ctx.save();
+        this.ctx.font = `bold ${this.fontSize}px Roboto`;
+        this.ctx.fillStyle = colors.text;
+        this.ctx.textAlign = 'right';
+        this.ctx.fillText(
+            currentYear.toString(), 
+            this.padding - 20, 
+            y + this.cellSize / 2
+        );
+        this.ctx.restore();
     }
 }

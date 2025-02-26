@@ -16,6 +16,8 @@ class App {
         
         this.init();
         this.setupEventListeners();
+        this.debounceTimeout = null;
+        this.isScrolling = false;
     }
 
     init() {
@@ -41,6 +43,33 @@ class App {
             document.body.classList.add('webapp-mode');
             console.log('📱 Приложение открыто в Telegram WebApp');
         }
+        this.optimizeScroll();
+        this.deferNonCriticalOperations();
+    }
+
+    optimizeScroll() {
+        // Оптимизация обработки скролла
+        window.addEventListener('scroll', () => {
+            if (this.debounceTimeout) clearTimeout(this.debounceTimeout);
+            
+            if (!this.isScrolling) {
+                this.isScrolling = true;
+                document.body.classList.add('is-scrolling');
+            }
+
+            this.debounceTimeout = setTimeout(() => {
+                this.isScrolling = false;
+                document.body.classList.remove('is-scrolling');
+            }, 150);
+        }, { passive: true });
+    }
+
+    deferNonCriticalOperations() {
+        // Отложенная загрузка неважных операций
+        requestIdleCallback(() => {
+            this.components.footer.init();
+            this.components.settings.showBrowserNotice();
+        });
     }
 
     setupEventListeners() {
