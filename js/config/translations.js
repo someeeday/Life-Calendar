@@ -23,7 +23,8 @@ export const translations = {
         connectionError: 'Проблема с подключением к серверу. Пожалуйста, проверьте интернет-соединение.',
         serverError: 'Ошибка сервера. Пожалуйста, попробуйте позже.',
         usingDefaults: 'Используем резервное соединение...',
-        corsError: 'Проблемы с межсайтовыми запросами, используется локальный режим.'
+        corsError: 'Проблемы с межсайтовыми запросами, используется локальный режим.',
+        debugInfo: 'Информация для диагностики'
     },
     en: {
         age: '← Age',
@@ -49,6 +50,7 @@ export const translations = {
         connectionError: 'Problem connecting to the server. Please check your internet connection.',
         serverError: 'Server error. Please try again later.',
         usingDefaults: 'Using backup connection...',
-        corsError: 'Cross-origin request issues, using local mode.'
+        corsError: 'Cross-origin request issues, using local mode.',
+        debugInfo: 'Debug information'
     }
 };

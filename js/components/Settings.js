@@ -64,62 +64,46 @@ export class Settings {
         const birthdate = document.getElementById('birthdate-input')?.value;
         
         if (!birthdate) {
-            // Показываем ошибку если дата не введена
             this.showError(translations[document.documentElement.lang].invalidDate);
             return;
         }
         
-        // Предотвращаем множественные запросы
         if (this.isSubmitting) {
-            console.log("Запрос уже выполняется, ожидайте...");
+            console.log("Запрос уже выполняется...");
             return;
         }
         
         this.isSubmitting = true;
         
         try {
-            // Отображаем индикатор загрузки
+            // Показываем индикатор загрузки
             this.showLoading(true);
             
-            // Сначала обновляем календарь
+            // Обновляем календарь
             const livedWeeks = this.calculateLivedWeeks(birthdate);
             window.app.components.calendar.draw(livedWeeks);
             
-            // Убираем ошибку при успешном создании
-            this.hideError();
-            
-            // Сохраняем дату в любом случае
+            // Сохраняем дату локально
             this.storage.setSetting('birthdate', birthdate);
+            this.hideError();
 
-            // Отправляем данные в Telegram используя новый метод sendUserData
+            // Отправляем данные на сервер
             const result = await window.app.telegram.sendUserData(birthdate);
             
-            // Обрабатываем различные варианты результата
-            if (result.usedDefaults && result.success) {
-                console.log("ℹ️ Запрос выполнен с параметрами по умолчанию");
+            if (!result.success && !result.browserMode) {
+                // Показываем ошибку с ID пользователя для диагностики
+                let errorMsg = translations[document.documentElement.lang].errorCreating;
+                if (result.userId) {
+                    errorMsg += ` (ID: ${result.userId})`;
+                }
+                this.showError(errorMsg);
             }
-            
-            if (result.simulated) {
-                console.log("ℹ️ Запрос обработан локально без отправки на сервер");
-            }
-            
-            if (result.noCors) {
-                console.log("ℹ️ Запрос отправлен в режиме no-cors");
-            }
-            
-            // Показываем ошибки только если мы в WebApp и произошла ошибка и это не имитация
-            if (!result.browserMode && !result.success && !result.simulated) {
-                this.showError(result.error || translations[document.documentElement.lang].errorCreating);
-            }
-
         } catch (error) {
             console.error('Ошибка:', error);
-            // Показываем ошибку только в WebApp
-            if (window.app.telegram.isTelegramWebApp()) {
-                this.showError(translations[this.language].errorCreating);
-            }
+            // Получаем ID для диагностики
+            const userId = window.app.telegram.tg?.initDataUnsafe?.user?.id || 'unknown';
+            this.showError(`${translations[document.documentElement.lang].errorCreating} (ID: ${userId})`);
         } finally {
-            // Скрываем индикатор загрузки
             this.showLoading(false);
             this.isSubmitting = false;
         }
@@ -309,7 +293,17 @@ export class Settings {
 
     showError(message) {
         if (this.errorElement) {
-            this.errorElement.textContent = message;
+            // Если сообщение содержит ID, выделяем его жирным
+            if (message.includes('ID:')) {
+                const parts = message.split('(ID:');
+                const baseMsg = parts[0].trim();
+                const idPart = parts[1].replace(')', '').trim();
+                
+                this.errorElement.innerHTML = `${baseMsg} <br><small>(ID: <strong>${idPart}</strong>)</small>`;
+            } else {
+                this.errorElement.textContent = message;
+            }
+            
             this.errorElement.style.display = 'block';
         } else {
             console.error('Error:', message);
