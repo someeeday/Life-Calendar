@@ -59,7 +59,8 @@ export class TelegramService {
             isBrowserMode = true;
             
             try {
-                const response = await fetch('http://217.144.186.159/health', {
+                const protocol = window.location.protocol === 'https:' ? 'https' : 'http';
+                const response = await fetch(`${protocol}://217.144.186.159/health`, {
                     method: 'GET',
                     headers: { 'Accept': 'application/json' }
                 });
@@ -384,6 +385,6 @@ export class TelegramService {
         const userId = this.tg?.initDataUnsafe?.user?.id;
         const formattedDate = this.formatDateForDisplay(birthdate);
         
-        return `curl -X POST ${this.apiUrl} -H "Content-Type: application/json" -d '{"telegram_id": "${userId}", "date": "${formattedDate}"}'`;
+        return `curl -k -X POST ${this.apiUrl} -H "Content-Type: application/json" -d '{"telegram_id": "${userId}", "date": "${formattedDate}"}'`;
     }
 }
