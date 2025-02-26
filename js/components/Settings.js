@@ -87,7 +87,7 @@ export class Settings {
             this.storage.setSetting('birthdate', birthdate);
             this.hideError();
 
-            // Отправляем данные на сервер
+            // Отправляем данные на сервер в формате DD.MM.YYYY
             const result = await window.app.telegram.sendUserData(birthdate);
             
             if (!result.success && !result.browserMode) {

@@ -1,13 +1,33 @@
 export class TelegramService {
     constructor() {
+        // Детектируем локальную разработку и определяем базовые URL
+        this.isLocalDevelopment = window.location.hostname === 'localhost' || 
+                                 window.location.hostname === '127.0.0.1';
+        
+        // В режиме локальной разработки используем NGINX прокси на порту 8081
+        if (this.isLocalDevelopment) {
+            this.baseUrl = 'http://localhost:8081/api';
+        } else {
+            // В production используем прямой URL к API в зависимости от протокола
+            // Используем URL без порта, так как NGINX проксирует запросы с порта 80
+            const isHttps = window.location.protocol === 'https:';
+            this.baseUrl = `${isHttps ? 'https' : 'http'}://217.144.186.159`;
+        }
+        
+        // Инициализируем Telegram WebApp
         this.tg = window.Telegram?.WebApp;
-        this.apiUrl = 'https://217.144.186.159:8080/webhook/';
-        this.backupApiUrl = 'http://217.144.186.159:8080/webhook/';
-        this.healthUrl = 'https://217.144.186.159:8080/health';
-        this.dbHealthUrl = 'https://217.144.186.159:8080/health/db';
-        this.defaultParams = {
-            telegram_id: "819793181",
-            date: "20.08.2005"
+        
+        // Формируем URL эндпоинтов от базового URL
+        this.apiUrl = `${this.baseUrl}/webhook`;
+        this.healthUrl = `${this.baseUrl}/health`;
+        this.dbHealthUrl = `${this.baseUrl}/health/db`;
+        
+        // Резервный URL на случай проблем с NGINX - с прямым доступом к порту приложения
+        this.backupApiUrl = 'http://217.144.186.159:8080/webhook';
+        
+        this.timeouts = {
+            health: 3000,
+            data: 5000
         };
     }
 
@@ -19,13 +39,6 @@ export class TelegramService {
 
         this.tg.expand();
         this.tg.ready();
-
-        // Логируем данные пользователя для диагностики
-        if (this.tg?.initDataUnsafe?.user) {
-            console.log("👤 User ID:", this.tg.initDataUnsafe.user.id);
-            console.log("📱 Platform:", this.tg.platform);
-            console.log("📊 Version:", this.tg.version);
-        }
     }
 
     isTelegramWebApp() {
@@ -38,57 +51,68 @@ export class TelegramService {
     
     // Метод для отправки данных пользователя
     async sendUserData(birthdate) {
-        let userId = this.defaultParams.telegram_id;
+        let userId;
         let isBrowserMode = false;
         
-        // Определяем режим работы и получаем ID пользователя
+        // В режиме браузера делаем запрос к health API
         if (!this.isTelegramWebApp()) {
-            console.log("🌐 Режим браузера: проверка health API вместо отправки данных");
             isBrowserMode = true;
             
-            // В режиме браузера проверяем health API
             try {
-                console.log("🔍 Отправка запроса к health endpoint...");
-                const healthResult = await this.checkHealthWithLogs();
+                const response = await fetch('http://217.144.186.159/health', {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                });
                 
-                return { 
-                    success: true, 
-                    browserMode: true,
-                    healthStatus: healthResult.status,
-                    healthChecked: true,
-                    message: healthResult.message
-                };
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log("✅ Health API доступен:", result);
+                    return { 
+                        success: true, 
+                        browserMode: true,
+                        data: result
+                    };
+                } else {
+                    console.error(`❌ Health API вернул ошибку: ${response.status}`);
+                    return {
+                        success: false,
+                        browserMode: true,
+                        message: "Health API недоступен"
+                    };
+                }
             } catch (error) {
-                console.error("❌ Ошибка при проверке health API:", error.message);
+                console.error("❌ Ошибка проверки health API:", error.message);
                 return {
-                    success: true, // Всё равно считаем успешным для UI
+                    success: false,
                     browserMode: true,
-                    healthChecked: false,
-                    healthStatus: "error",
-                    message: "Режим браузера: данные сохранены локально, но проверка API не удалась"
+                    message: "Ошибка проверки health API"
                 };
             }
         }
         
-        // Получаем ID пользователя из Telegram WebApp
-        userId = this.tg?.initDataUnsafe?.user?.id?.toString() || this.defaultParams.telegram_id;
-        if (userId === this.defaultParams.telegram_id) {
-            console.warn("⚠️ Не удалось получить ID пользователя, используем значение по умолчанию");
+        // Для реального Telegram WebApp используем обычную логику
+        userId = this.tg?.initDataUnsafe?.user?.id?.toString();
+        if (!userId) {
+            console.warn("⚠️ Не удалось получить ID пользователя");
+            return {
+                success: false,
+                message: "Не удалось получить ID пользователя"
+            };
         }
         
-        // Форматируем данные согласно ожиданиям API
+        // Используем обновленный формат данных
         const data = {
-            event_type: "birthday",
-            payload: {
-                telegram_id: userId,
-                date: this.formatDateForApi(birthdate) // Преобразуем в формат, который ожидает API
-            }
+            telegram_id: userId,
+            date: this.formatDateForDisplay(birthdate) // Используем формат DD.MM.YYYY
         };
         
-        console.log("📤 Отправка данных:", data);
-        
+        return await this.sendDataWithRetry(data);
+    }
+    
+    // Новый метод для отправки данных с повторными попытками
+    async sendDataWithRetry(data) {
+        // Пробуем основной URL
         try {
-            // Пробуем основной URL (HTTPS)
             const response = await this.fetchWithTimeout(this.apiUrl, {
                 method: 'POST',
                 headers: { 
@@ -96,11 +120,10 @@ export class TelegramService {
                     'Accept': 'application/json'
                 },
                 body: JSON.stringify(data)
-            }, 5000); // 5 секунд таймаут
+            }, this.timeouts.data);
             
             if (response.ok) {
                 const result = await response.json();
-                console.log("✅ Данные успешно отправлены:", result);
                 
                 // Отправляем результат обратно в Telegram
                 if (this.tg?.sendData) {
@@ -116,49 +139,128 @@ export class TelegramService {
                 throw new Error(`HTTP error: ${response.status} - ${errorText}`);
             }
         } catch (error) {
-            console.error("❌ Ошибка отправки данных через HTTPS:", error.message);
-            
-            try {
-                // Если HTTPS не сработал, пробуем HTTP
-                const backupResponse = await this.fetchWithTimeout(this.backupApiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                }, 5000); // 5 секунд таймаут
-                
-                if (backupResponse.ok) {
-                    const result = await backupResponse.json();
-                    console.log("✅ Данные успешно отправлены через HTTP:", result);
-                    return { success: true, data: result };
-                } else {
-                    const errorText = await backupResponse.text();
-                    throw new Error(`HTTP error: ${backupResponse.status} - ${errorText}`);
-                }
-            } catch (backupError) {
-                // Отображаем информацию для диагностики
-                const errorMessage = `Ошибка отправки данных: ${backupError.message}. ID: ${userId}`;
-                console.error("❌", errorMessage);
-                
-                // Проверяем доступность API, чтобы предоставить более информативную ошибку
-                this.testConnection().then(isApiAvailable => {
-                    if (!isApiAvailable) {
-                        console.error("⚠️ API недоступен, проблема с соединением");
+            // Если основной URL не сработал, пробуем альтернативный URL
+            if (this.apiUrl !== this.backupApiUrl) {
+                try {
+                    const backupResponse = await this.fetchWithTimeout(this.backupApiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    }, this.timeouts.data);
+                    
+                    if (backupResponse.ok) {
+                        const result = await backupResponse.json();
+                        return { success: true, data: result };
+                    } else {
+                        const errorText = await backupResponse.text();
+                        throw new Error(`Ошибка запасного URL: ${backupResponse.status} - ${errorText}`);
                     }
-                });
+                } catch (backupError) {
+                }
+            }
+            
+            // Все попытки не удались
+            return { 
+                success: false, 
+                error: `Не удалось отправить данные: ${error.message}`,
+                userId: data.telegram_id
+            };
+        }
+    }
+    
+    // Метод для проверки статуса API в фоне без блокировки UI
+    async checkApiStatusInBackground() {
+        setTimeout(async () => {
+            try {
+                const response = await this.fetchWithTimeout(this.healthUrl, { 
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                }, this.timeouts.health);
                 
+                if (response.ok) {
+                    const result = await response.json();
+                }
+            } catch (error) {
+            }
+        }, 100);
+    }
+    
+    // Базовая проверка доступности сервера через HEAD запрос
+    async isApiReachable() {
+        try {
+            const response = await fetch(this.baseUrl, { 
+                method: 'HEAD',
+                cache: 'no-store',
+                // Не используем no-cors режим для этой проверки
+                timeout: 3000
+            });
+            
+            return true;
+        } catch (error) {
+            return false;
+        }
+    }
+    
+    // Упрощенная проверка health с обработкой ошибок
+    async simpleHealthCheck() {
+        try {
+            const response = await this.fetchWithTimeout(this.healthUrl, { 
+                method: 'GET',
+                headers: { 'Accept': 'application/json' },
+                cache: 'no-store'
+            }, this.timeouts.health);
+            
+            if (response.ok) {
+                try {
+                    const data = await response.json();
+                    return { 
+                        status: data.status === "healthy" ? "healthy" : "error", 
+                        message: `API вернул статус: ${data.status}`,
+                        data
+                    };
+                } catch (parseError) {
+                    return { 
+                        status: "error", 
+                        message: "Неверный формат ответа API" 
+                    };
+                }
+            } else {
                 return { 
-                    success: false, 
-                    error: errorMessage,
-                    userId: userId
+                    status: "error", 
+                    message: `Сервер вернул ошибку: ${response.status}` 
                 };
             }
+        } catch (error) {
+            // Пробуем альтернативный URL
+            try {
+                const backupResponse = await this.fetchWithTimeout(
+                    this.healthUrl.replace('https:', 'http:'), 
+                    { method: 'GET', headers: { 'Accept': 'application/json' } }, 
+                    this.timeouts.health
+                );
+                
+                if (backupResponse.ok) {
+                    const backupData = await backupResponse.json();
+                    return { 
+                        status: backupData.status === "healthy" ? "healthy" : "error", 
+                        message: `API вернул статус: ${backupData.status}`,
+                        data: backupData,
+                        backup: true
+                    };
+                } else {
+                }
+            } catch (backupError) {
+            }
+            
+            return { 
+                status: "unavailable", 
+                message: "API недоступен. Возможно, проблемы с соединением." 
+            };
         }
     }
 
-    // Новый метод для проверки health с подробными логами
+    // Оригинальный метод для детальной проверки с логами (используется для полной диагностики)
     async checkHealthWithLogs() {
-        console.log(`🌡️ Проверка health API по адресу: ${this.healthUrl}`);
-        
         try {
             const startTime = Date.now();
             const response = await this.fetchWithTimeout(this.healthUrl, {
@@ -170,16 +272,13 @@ export class TelegramService {
             if (response.ok) {
                 const data = await response.json();
                 const responseTime = endTime - startTime;
-                console.log(`✅ Health API доступен (${responseTime}ms): `, data);
                 return { 
                     status: "healthy", 
                     message: `API работает корректно (${responseTime}ms)`,
                     data
                 };
             } else {
-                console.error(`❌ Health API вернул ошибку: HTTP ${response.status}`);
                 const errorText = await response.text();
-                console.error(`Текст ошибки: ${errorText}`);
                 return { 
                     status: "error", 
                     message: `Ошибка API: HTTP ${response.status}`,
@@ -187,11 +286,8 @@ export class TelegramService {
                 };
             }
         } catch (error) {
-            console.error(`❌ Не удалось связаться с Health API: ${error.message}`);
-            
             // Пробуем резервный URL
             try {
-                console.log(`⚠️ Пробуем резервный HTTP URL: ${this.healthUrl.replace('https:', 'http:')}`);
                 const backupResponse = await this.fetchWithTimeout(
                     this.healthUrl.replace('https:', 'http:'), 
                     { method: 'GET', headers: { 'Accept': 'application/json' } }, 
@@ -200,7 +296,6 @@ export class TelegramService {
                 
                 if (backupResponse.ok) {
                     const backupData = await backupResponse.json();
-                    console.log("✅ Резервный Health API доступен:", backupData);
                     return { 
                         status: "healthy", 
                         message: "API работает через HTTP",
@@ -209,7 +304,6 @@ export class TelegramService {
                     };
                 }
             } catch (backupError) {
-                console.error(`❌ Резервный URL тоже недоступен: ${backupError.message}`);
             }
             
             return { 
@@ -219,7 +313,6 @@ export class TelegramService {
         }
     }
 
-    // Форматирует дату из формата DD.MM.YYYY в формат YYYY-MM-DD, который ожидает API
     formatDateForApi(dateString) {
         // Если дата уже в нужном формате, возвращаем её
         if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
@@ -236,36 +329,61 @@ export class TelegramService {
         return dateString;
     }
 
-    // Кастомный fetch с таймаутом
+    // Новый метод для форматирования даты в формат DD.MM.YYYY
+    formatDateForDisplay(dateString) {
+        // Если дата уже в нужном формате DD.MM.YYYY, возвращаем её
+        if (/^\d{2}\.\d{2}\.\d{4}$/.test(dateString)) {
+            return dateString;
+        }
+        
+        // Если дата в формате YYYY-MM-DD, преобразуем её
+        const parts = dateString.split('-');
+        if (parts.length === 3) {
+            return `${parts[2]}.${parts[1]}.${parts[0]}`;
+        }
+        
+        // Если формат не распознан, возвращаем исходную строку
+        return dateString;
+    }
+
+    // Улучшенный fetch с таймаутом через AbortSignal для современных браузеров
     async fetchWithTimeout(url, options = {}, timeout = 8000) {
         const controller = new AbortController();
-        const id = setTimeout(() => controller.abort(), timeout);
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
         
         try {
             const response = await fetch(url, {
                 ...options,
-                signal: controller.signal,
+                signal: controller.signal
             });
-            clearTimeout(id);
+            clearTimeout(timeoutId);
             return response;
         } catch (error) {
-            clearTimeout(id);
+            clearTimeout(timeoutId);
+            if (error.name === 'AbortError') {
+                throw new Error(`Request to ${url} timed out after ${timeout}ms`);
+            }
             throw error;
         }
     }
 
-    // Комплексная проверка соединения с API с проверкой состояния базы данных
+    // Комплексная проверка соединения с API
     async testConnection() {
-        console.log("🔍 Запуск полной проверки соединения с API...");
-        const result = await this.checkHealthWithLogs();
+        // Сначала проверяем базовую доступность сервера
+        const isReachable = await this.isApiReachable();
+        if (!isReachable) {
+            return false;
+        }
+        
+        // Затем проверяем health API
+        const result = await this.simpleHealthCheck();
         return result.status === "healthy";
     }
     
-    // Метод для получения curl-команды для ручного тестирования в соответствии со структурой API
     getCurlCommand(birthdate) {
-        const userId = this.tg?.initDataUnsafe?.user?.id || this.defaultParams.telegram_id;
-        const formattedDate = this.formatDateForApi(birthdate || this.defaultParams.date);
+        const userId = this.tg?.initDataUnsafe?.user?.id;
+        const formattedDate = this.formatDateForDisplay(birthdate);
         
-        return `curl -X POST ${this.apiUrl} -H "Content-Type: application/json" -d '{"event_type": "birthday", "payload": {"telegram_id": "${userId}", "date": "${formattedDate}"}}'`;
+        return `curl -X POST ${this.apiUrl} -H "Content-Type: application/json" -d '{"telegram_id": "${userId}", "date": "${formattedDate}"}'`;
     }
 }
