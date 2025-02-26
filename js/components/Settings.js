@@ -10,6 +10,7 @@ export class Settings {
         this.storage = new StorageService();
         this.eventListeners = {};
         this.errorElement = document.getElementById('birthdate-error');
+        this.isSubmitting = false; // Флаг для предотвращения множественных запросов
     }
 
     init() {
@@ -67,8 +68,19 @@ export class Settings {
             this.showError(translations[document.documentElement.lang].invalidDate);
             return;
         }
-
+        
+        // Предотвращаем множественные запросы
+        if (this.isSubmitting) {
+            console.log("Запрос уже выполняется, ожидайте...");
+            return;
+        }
+        
+        this.isSubmitting = true;
+        
         try {
+            // Отображаем индикатор загрузки
+            this.showLoading(true);
+            
             // Сначала обновляем календарь
             const livedWeeks = this.calculateLivedWeeks(birthdate);
             window.app.components.calendar.draw(livedWeeks);
@@ -93,6 +105,10 @@ export class Settings {
             if (window.app.telegram.isTelegramWebApp()) {
                 this.showError(translations[this.language].errorCreating);
             }
+        } finally {
+            // Скрываем индикатор загрузки
+            this.showLoading(false);
+            this.isSubmitting = false;
         }
     }
 
@@ -362,5 +378,23 @@ export class Settings {
         
         const daysInMonth = new Date(year, month, 0).getDate();
         return day > 0 && day <= daysInMonth;
+    }
+
+    // Добавим метод для отображения/скрытия индикатора загрузки
+    showLoading(isLoading) {
+        const button = document.getElementById('create-calendar-btn');
+        if (!button) return;
+        
+        if (isLoading) {
+            // Сохраняем оригинальный текст кнопки
+            button.dataset.originalText = button.textContent;
+            // Добавляем индикатор загрузки
+            button.textContent = '⏳ ' + translations[document.documentElement.lang].loading;
+            button.disabled = true;
+        } else {
+            // Восстанавливаем оригинальный текст
+            button.textContent = button.dataset.originalText || translations[document.documentElement.lang].createCalendar;
+            button.disabled = false;
+        }
     }
 }

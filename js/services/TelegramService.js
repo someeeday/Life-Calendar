@@ -1,8 +1,13 @@
 export class TelegramService {
     constructor() {
         this.tg = window.Telegram?.WebApp;
-        this.apiUrl = 'http://217.144.186.159:8080/webhook';
+        // Обновляем на HTTPS-адрес для большей безопасности и надёжности
+        this.apiUrl = 'https://217.144.186.159:8080/webhook';
+        this.backupApiUrl = 'http://217.144.186.159:8080/webhook'; // Бэкап URL для HTTP
         this.callbacks = new Map();
+        this.maxRetries = 3; // Максимальное количество повторных попыток
+        this.currentApiUrl = this.apiUrl; // Активный URL для запросов
+        this.connectionTested = false;
     }
 
     init() {
@@ -30,6 +35,9 @@ export class TelegramService {
             console.log("Version:", this.tg.version);
             console.log("InitData:", this.tg.initData);
         }
+        
+        // Тестируем соединение в фоне
+        this.testServerConnection();
     }
 
     isTelegramWebApp() {
@@ -40,48 +48,40 @@ export class TelegramService {
             this.tg?.version
         );
     }
-
-    async sendUserData(birthdate) {
-        if (!this.isTelegramWebApp()) {
-            // В браузере просто возвращаем успешный результат без сообщений об ошибке
-            return {
-                success: true,
-                browserMode: true,
-                data: { birthdate }
-            };
-        }
-
+    
+    async testServerConnection() {
         try {
-            const userId = this.tg.initDataUnsafe.user.id;
-            console.log("📤 Подготовка данных для отправки:", { userId, birthdate });
-
+            // Пингуем основной URL
             const response = await fetch(this.apiUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    telegram_id: userId.toString(),
-                    date: birthdate
-                })
+                method: 'HEAD',
+                // Таймаут 5 секунд для проверки
+                signal: AbortSignal.timeout(5000)
             });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+            
+            if (response.ok) {
+                console.log("✅ API сервер доступен");
+                this.currentApiUrl = this.apiUrl;
+                this.connectionTested = true;
+                return true;
             }
-
-            const result = await response.json();
-            console.log("✅ Данные успешно отправлены:", result);
-
-            // Отправляем успешный статус в Telegram WebApp
-            this.tg.sendData(JSON.stringify({
-                type: "register",
-                status: "success",
-                date: birthdate
-            }));
-
-            // Закрываем WebApp после успешной отправки
-            setTimeout(() => this.tg.close(), 100);
+        } catch (error) {
+            console.log("⚠️ Основной API недоступен, пробуем запасной URL");
+            
+            try {
+                // Пробуем запасной HTTP URL
+                const backupResponse = await fetch(this.backupApiUrl, {
+                    method: 'HEAD',
+                    signal: AbortSignal.timeout(5000)
+                });
+                
+                if (backupResponse.ok) {
+                    console.log("✅ Запасной API сервер доступен");
+                    this.currentApiUrl = this.backupApiUrl;
+                    this.connectionTested = true;
+                    return true;
+                }
+            } catch (backupError) {
+                console.error("❌ Все API серверы недоступны:", backupError);
 
             return { success: true, data: result };
 

@@ -16,7 +16,12 @@ export const translations = {
                 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
         weekDays: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
         hiddenText: "Хочешь обсудить проект или есть идеи для улучшения? Напиши мне <a href='https://t.me/someeeday'>в телеграм</a>, а также можешь заглянуть в <a id='bot-link' href='https://t.me/LifeCalendarRobot'>бота</a>.",
-        openBot: 'Также советую зайти в моего бота @LifeCalendarRobot, постепенно буду добавлять новые фичи'
+        openBot: 'Также советую зайти в моего бота @LifeCalendarRobot, постепенно буду добавлять новые фичи',
+        loading: 'Отправка...',
+        errorFetch: 'Не удалось подключиться к серверу',
+        retryConnection: 'Повторить попытку',
+        connectionError: 'Проблема с подключением к серверу. Пожалуйста, проверьте интернет-соединение.',
+        serverError: 'Ошибка сервера. Пожалуйста, попробуйте позже.'
     },
     en: {
         age: '← Age',
@@ -35,6 +40,11 @@ export const translations = {
                 'July', 'August', 'September', 'October', 'November', 'December'],
         weekDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
         hiddenText: "Want to discuss the project or have ideas for improvements? <a href='https://t.me/someeeday'>Message me</a> on Telegram. And don't forget to check out my <a id='bot-link' href='https://t.me/LifeCalendarRobot'>bot</a> with new features",
-        openBot: 'Also check out my bot @LifeCalendarRobot, I will be adding new features over time'
+        openBot: 'Also check out my bot @LifeCalendarRobot, I will be adding new features over time',
+        loading: 'Sending...',
+        errorFetch: 'Failed to connect to the server',
+        retryConnection: 'Retry',
+        connectionError: 'Problem connecting to the server. Please check your internet connection.',
+        serverError: 'Server error. Please try again later.'
     }
 };
