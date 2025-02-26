@@ -21,7 +21,9 @@ export const translations = {
         errorFetch: 'Не удалось подключиться к серверу',
         retryConnection: 'Повторить попытку',
         connectionError: 'Проблема с подключением к серверу. Пожалуйста, проверьте интернет-соединение.',
-        serverError: 'Ошибка сервера. Пожалуйста, попробуйте позже.'
+        serverError: 'Ошибка сервера. Пожалуйста, попробуйте позже.',
+        usingDefaults: 'Используем резервное соединение...',
+        corsError: 'Проблемы с межсайтовыми запросами, используется локальный режим.'
     },
     en: {
         age: '← Age',
@@ -45,6 +47,8 @@ export const translations = {
         errorFetch: 'Failed to connect to the server',
         retryConnection: 'Retry',
         connectionError: 'Problem connecting to the server. Please check your internet connection.',
-        serverError: 'Server error. Please try again later.'
+        serverError: 'Server error. Please try again later.',
+        usingDefaults: 'Using backup connection...',
+        corsError: 'Cross-origin request issues, using local mode.'
     }
 };

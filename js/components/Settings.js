@@ -91,12 +91,25 @@ export class Settings {
             // Сохраняем дату в любом случае
             this.storage.setSetting('birthdate', birthdate);
 
-            // Отправляем данные в Telegram
+            // Отправляем данные в Telegram используя новый метод sendUserData
             const result = await window.app.telegram.sendUserData(birthdate);
             
-            // Показываем ошибки только если мы в WebApp и произошла ошибка
-            if (!result.browserMode && !result.success) {
-                this.showError(result.error || translations[this.language].errorCreating);
+            // Обрабатываем различные варианты результата
+            if (result.usedDefaults && result.success) {
+                console.log("ℹ️ Запрос выполнен с параметрами по умолчанию");
+            }
+            
+            if (result.simulated) {
+                console.log("ℹ️ Запрос обработан локально без отправки на сервер");
+            }
+            
+            if (result.noCors) {
+                console.log("ℹ️ Запрос отправлен в режиме no-cors");
+            }
+            
+            // Показываем ошибки только если мы в WebApp и произошла ошибка и это не имитация
+            if (!result.browserMode && !result.success && !result.simulated) {
+                this.showError(result.error || translations[document.documentElement.lang].errorCreating);
             }
 
         } catch (error) {
