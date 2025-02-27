@@ -1,7 +1,7 @@
 export class StorageService {
     constructor() {
         this.isTelegram = typeof window.Telegram !== 'undefined';
-        this.storage = this.isTelegram ? window.Telegram.WebApp.storage : window.localStorage;
+        this.storage = this.isTelegram ? window.Telegram.WebApp : window.localStorage;
         this.defaultSettings = {
             theme: 'light',
             language: 'ru',
@@ -12,7 +12,7 @@ export class StorageService {
     saveSettings(settings) {
         try {
             Object.entries(settings).forEach(([key, value]) => {
-                this.storage.setItem(key, value);
+                this.isTelegram ? this.storage.setStorageItem(key, value) : this.storage.setItem(key, value);
             });
             return true;
         } catch (error) {
@@ -24,9 +24,9 @@ export class StorageService {
     loadSettings() {
         try {
             return {
-                theme: this.storage.getItem('theme') || this.defaultSettings.theme,
-                language: this.storage.getItem('language') || this.defaultSettings.language,
-                birthdate: this.storage.getItem('birthdate') || this.defaultSettings.birthdate
+                theme: this.isTelegram ? this.storage.getStorageItem('theme') : this.storage.getItem('theme') || this.defaultSettings.theme,
+                language: this.isTelegram ? this.storage.getStorageItem('language') : this.storage.getItem('language') || this.defaultSettings.language,
+                birthdate: this.isTelegram ? this.storage.getStorageItem('birthdate') : this.storage.getItem('birthdate') || this.defaultSettings.birthdate
             };
         } catch (error) {
             console.error('Ошибка загрузки настроек:', error);
@@ -36,7 +36,7 @@ export class StorageService {
 
     getSetting(key) {
         try {
-            return this.storage.getItem(key) || this.defaultSettings[key];
+            return this.isTelegram ? this.storage.getStorageItem(key) : this.storage.getItem(key) || this.defaultSettings[key];
         } catch (error) {
             console.error(`Ошибка получения настройки ${key}:`, error);
             return this.defaultSettings[key];
@@ -45,7 +45,7 @@ export class StorageService {
 
     setSetting(key, value) {
         try {
-            this.storage.setItem(key, value);
+            this.isTelegram ? this.storage.setStorageItem(key, value) : this.storage.setItem(key, value);
             return true;
         } catch (error) {
             console.error(`Ошибка установки настройки ${key}:`, error);
@@ -55,7 +55,7 @@ export class StorageService {
 
     clearSettings() {
         try {
-            this.storage.clear();
+            this.isTelegram ? this.storage.clearStorage() : this.storage.clear();
             return true;
         } catch (error) {
             console.error('Ошибка очистки настроек:', error);
@@ -65,7 +65,7 @@ export class StorageService {
 
     removeSetting(key) {
         try {
-            this.storage.removeItem(key);
+            this.isTelegram ? this.storage.removeStorageItem(key) : this.storage.removeItem(key);
             return true;
         } catch (error) {
             console.error(`Ошибка удаления настройки ${key}:`, error);
@@ -74,14 +74,14 @@ export class StorageService {
     }
 
     hasSettings() {
-        return this.storage.length > 0;
+        return this.isTelegram ? Object.keys(this.storage.getStorage()).length > 0 : this.storage.length > 0;
     }
 
     isStorageAvailable() {
         try {
             const testKey = '__storage_test__';
-            this.storage.setItem(testKey, testKey);
-            this.storage.removeItem(testKey);
+            this.isTelegram ? this.storage.setStorageItem(testKey, testKey) : this.storage.setItem(testKey, testKey);
+            this.isTelegram ? this.storage.removeStorageItem(testKey) : this.storage.removeItem(testKey);
             return true;
         } catch (error) {
             return false;
