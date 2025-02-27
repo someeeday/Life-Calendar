@@ -10,7 +10,7 @@ export class TelegramService {
         } else {
             // В production используем прямой URL к API в зависимости от протокола
             const isHttps = window.location.protocol === 'https:';
-            this.baseUrl = `${isHttps ? 'https' : 'http'}://217.144.186.159:8080`;
+            this.baseUrl = `${isHttps ? 'https' : 'http'}://someeeday.me/api`;
         }
         
         // Инициализируем Telegram WebApp
