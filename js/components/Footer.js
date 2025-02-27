@@ -1,53 +1,129 @@
 import { translations } from '../config/translations.js';
-import { StorageService } from '../services/StorageService.js';
 
 export class Footer {
     constructor(selector) {
         this.footer = document.querySelector(selector);
-        this.hiddenContent = document.getElementById('hidden-content');
-        this.hiddenText = document.getElementById('hidden-text');
-        this.authorLink = document.querySelector('.clickable-link');
         this.isHidden = true;
-        this.storage = new StorageService();
     }
 
     init() {
-        if (!this.footer || !this.hiddenContent || !this.hiddenText || !this.authorLink) {
-            return;
-        }
-
-        // Начальное состояние
-        this.hiddenContent.style.display = 'none';
+        if (!this.footer) return;
         
-        // Больше не добавляем обработчик здесь, так как он добавляется в App.js
+        this.footer.innerHTML = '';
+        this.render();
+        this.setupEventListeners();
+    }
+
+    render() {
+        // Создаем структуру футера оптимизированным способом
+        const html = `
+            <div class="footer__content">
+                <span class="footer__text">Created by</span>
+                <span id="author-link" class="clickable-link" role="button" tabindex="0">@someeeday</span>
+            </div>
+            <div id="hidden-content" class="hidden-content" style="display:none;"></div>
+        `;
+        
+        this.footer.insertAdjacentHTML('beforeend', html);
+        
+        // Кэшируем ссылки на элементы
+        this.authorLink = document.getElementById('author-link');
+        this.hiddenContent = document.getElementById('hidden-content');
+        
+        // Инициализируем содержимое скрытого блока
+        this.updateHiddenContent();
+    }
+
+    setupEventListeners() {
+        // Используем делегирование событий
+        this.footer.addEventListener('click', e => {
+            if (e.target.id === 'author-link' || e.target.closest('#author-link')) {
+                this.toggleHiddenContent();
+                e.preventDefault();
+            }
+        });
+        
+        // Обработчик для клика вне футера
+        document.addEventListener('click', e => {
+            if (this.hiddenContent?.style.display === 'block' && 
+                !this.footer.contains(e.target)) {
+                this.hideHiddenContent();
+            }
+        });
+        
+        // Слушаем изменение языка через один обработчик
+        const languageChangeHandler = e => {
+            this.hideHiddenContent();
+            this.updateHiddenContent(e.detail);
+        };
+        
+        document.addEventListener('languageChanged', languageChangeHandler);
+        window.addEventListener('languageChanged', languageChangeHandler);
+    }
+
+    toggleHiddenContent() {
+        if (this.isHidden) {
+            this.showHiddenContent();
+        } else {
+            this.hideHiddenContent();
+        }
+    }
+
+    showHiddenContent() {
+        if (!this.hiddenContent) return;
+        
+        this.hiddenContent.style.display = 'block';
+        this.isHidden = false;
+        
+        this.updateHiddenContent();
+        
+        // Используем requestAnimationFrame для более плавной прокрутки
+        requestAnimationFrame(() => {
+            window.scrollTo({
+                top: document.body.scrollHeight,
+                behavior: 'smooth'
+            });
+        });
+    }
+
+    hideHiddenContent() {
+        if (this.hiddenContent) {
+            this.hiddenContent.style.display = 'none';
+            this.isHidden = true;
+        }
     }
 
     updateContent(lang) {
-        if (!this.hiddenContent || !this.hiddenText) return;
-        
-        const settings = this.storage.loadSettings();
-        this.hiddenText.innerHTML = translations[lang || settings.language].hiddenText;
+        this.updateHiddenContent(lang);
     }
 
-    handleLinkClick(e) {
-        e.preventDefault();
-        e.stopPropagation();
+    updateHiddenContent(lang) {
+        if (!this.hiddenContent) return;
         
-        this.isHidden = !this.isHidden;
+        const currentLang = lang || document.documentElement.lang || 'ru';
+        const isTelegram = window.app?.telegram?.isTelegramWebApp?.() || false;
         
-        // Получаем настройки
-        const settings = this.storage.loadSettings();
-        const currentLang = settings.language || 'ru';
+        // Создаем контент сразу с правильным переводом
+        const contactText = translations[currentLang]?.contactText || 
+                          (currentLang === 'ru' 
+                            ? 'Если у вас есть вопросы или предложения, напишите мне:' 
+                            : 'If you have any questions or suggestions, message me:');
+        
+        const html = `
+            <p class="hidden-content__text">
+                ${contactText} 
+                <a href="https://t.me/someeeday" target="_blank" class="footer__link">
+                    t.me/someeeday
+                </a>
+            </p>
+        `;
+        
+        this.hiddenContent.innerHTML = html;
+    }
 
-        // Обновляем состояние контента
-        this.hiddenContent.style.display = this.isHidden ? 'none' : 'block';
-        
-        // Обновляем текст только при показе
-        if (!this.isHidden) {
-            this.updateContent(currentLang);
-            setTimeout(() => {
-                this.hiddenContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 100);
+    toggleVisibility(show) {
+        if (this.footer) {
+            this.footer.style.display = show ? 'block' : 'none';
         }
     }
 }

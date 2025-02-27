@@ -24,7 +24,14 @@ export const translations = {
         serverError: 'Ошибка сервера. Пожалуйста, попробуйте позже.',
         usingDefaults: 'Используем резервное соединение...',
         corsError: 'Проблемы с межсайтовыми запросами, используется локальный режим.',
-        debugInfo: 'Информация для диагностики'
+        debugInfo: 'Информация для диагностики',
+        // Добавляем секретные сообщения
+        secretBrowser: 'Спасибо за использование Life Calendar! Подписывайтесь на @someeeday для других проектов.',
+        secretTelegram: 'Спасибо за использование Life Calendar! Автор: @someeeday',
+        
+        // Текст для футера
+        contactText: 'Если у вас есть вопросы или предложения, напишите мне:',
+        tryBot: 'Попробуйте бота:'
     },
     en: {
         age: '← Age',
@@ -51,6 +58,15 @@ export const translations = {
         serverError: 'Server error. Please try again later.',
         usingDefaults: 'Using backup connection...',
         corsError: 'Cross-origin request issues, using local mode.',
-        debugInfo: 'Debug information'
+        debugInfo: 'Debug information',
+        // Adding secret messages
+        secretBrowser: 'Thank you for using Life Calendar! Follow @someeeday for other projects.',
+        secretTelegram: 'Thank you for using Life Calendar! Author: @someeeday',
+        tryBot: 'Try the bot:',
+        copyright: '©️ 2023 @someeeday',
+        
+        // Текст для футера
+        contactText: 'If you have any questions or suggestions, message me:',
+        tryBot: 'Try the bot:'
     }
 };

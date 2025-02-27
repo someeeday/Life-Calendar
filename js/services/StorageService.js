@@ -1,163 +1,139 @@
 export class StorageService {
     constructor() {
-        this.isTelegram = typeof window.Telegram !== 'undefined';
-        try {
-            // Проверяем доступность Telegram.WebApp и его хранилища
-            if (this.isTelegram && window.Telegram?.WebApp?.storage) {
-                this.storage = window.Telegram.WebApp.storage;
-            } else {
-                // Если не в Telegram или нет хранилища WebApp, используем localStorage
-                this.storage = window.localStorage || sessionStorage;
-            }
-        } catch (error) {
-            console.error('Ошибка инициализации хранилища:', error);
-            // Резервный вариант - sessionStorage
-            this.storage = window.sessionStorage;
-        }
-        
         this.defaultSettings = {
             theme: 'light',
             language: 'ru',
             birthdate: ''
         };
         
-        // Проверка работоспособности хранилища
-        if (!this.isStorageAvailable()) {
-            console.warn('Хранилище недоступно, используем встроенные значения по умолчанию');
-            // Создаем in-memory хранилище
+        // Инициализация хранилища с проверкой доступности
+        this.initStorage();
+    }
+
+    initStorage() {
+        try {
+            // Проверяем доступность Telegram WebApp
+            const isTelegram = typeof window.Telegram !== 'undefined';
+            
+            // Пытаемся использовать лучшее доступное хранилище
+            if (isTelegram && window.Telegram?.WebApp?.storage) {
+                this.storage = window.Telegram.WebApp.storage;
+            } else {
+                // Последовательно проверяем localStorage, sessionStorage
+                this.storage = this.isStorageAvailable('localStorage') 
+                    ? window.localStorage 
+                    : (this.isStorageAvailable('sessionStorage') ? window.sessionStorage : null);
+            }
+            
+            // Если хранилище недоступно - используем in-memory решение
+            if (!this.storage) {
+                this.createInMemoryStorage();
+                console.warn('External storage unavailable, using in-memory storage');
+            }
+        } catch (error) {
+            console.error('Storage initialization error:', error);
             this.createInMemoryStorage();
         }
     }
+    
+    isStorageAvailable(type) {
+        try {
+            const storage = window[type];
+            const testKey = '__storage_test__';
+            storage.setItem(testKey, testKey);
+            const result = storage.getItem(testKey) === testKey;
+            storage.removeItem(testKey);
+            return result;
+        } catch (e) {
+            return false;
+        }
+    }
 
-    // Создает in-memory хранилище, если localStorage недоступен
     createInMemoryStorage() {
-        this._inMemoryStorage = {};
-        // Переопределяем методы
+        const memStorage = {};
         this.storage = {
-            getItem: (key) => this._inMemoryStorage[key] || null,
-            setItem: (key, value) => { this._inMemoryStorage[key] = value; },
-            removeItem: (key) => { delete this._inMemoryStorage[key]; },
-            clear: () => { this._inMemoryStorage = {}; },
-            get length() { return Object.keys(this._inMemoryStorage).length; }
+            getItem: key => memStorage[key] ?? null,
+            setItem: (key, value) => { memStorage[key] = String(value); },
+            removeItem: key => { delete memStorage[key]; },
+            clear: () => { Object.keys(memStorage).forEach(key => delete memStorage[key]); },
+            get length() { return Object.keys(memStorage).length; }
         };
     }
 
-    saveSettings(settings) {
+    // Базовые методы для работы с хранилищем
+    saveSettings(settings = {}) {
+        if (!this.storage) return false;
+        
         try {
-            if (!this.storage) {
-                console.error('Хранилище недоступно');
-                return false;
-            }
-            
-            Object.entries(settings).forEach(([key, value]) => {
-                this.storage.setItem(key, value);
-            });
-            console.log('Настройки сохранены успешно:', settings);
+            Object.entries(settings).forEach(([key, value]) => 
+                this.storage.setItem(key, value));
             return true;
         } catch (error) {
-            console.error('Ошибка сохранения настроек:', error);
+            console.error('Settings save error:', error);
             return false;
         }
     }
 
     loadSettings() {
+        if (!this.storage) return this.defaultSettings;
+        
         try {
-            if (!this.storage) {
-                console.error('Хранилище недоступно');
-                return this.defaultSettings;
-            }
-            
-            const settings = {
+            return {
                 theme: this.storage.getItem('theme') || this.defaultSettings.theme,
                 language: this.storage.getItem('language') || this.defaultSettings.language,
                 birthdate: this.storage.getItem('birthdate') || this.defaultSettings.birthdate
             };
-            
-            console.log('Загружены настройки:', settings);
-            return settings;
         } catch (error) {
-            console.error('Ошибка загрузки настроек:', error);
+            console.error('Settings load error:', error);
             return this.defaultSettings;
         }
     }
 
     getSetting(key) {
+        if (!this.storage || !key) return this.defaultSettings[key];
+        
         try {
-            if (!this.storage) {
-                console.error('Хранилище недоступно');
-                return this.defaultSettings[key];
-            }
-            
-            const value = this.storage.getItem(key) || this.defaultSettings[key];
-            return value;
+            return this.storage.getItem(key) || this.defaultSettings[key] || null;
         } catch (error) {
-            console.error(`Ошибка получения настройки ${key}:`, error);
-            return this.defaultSettings[key];
+            return this.defaultSettings[key] || null;
         }
     }
 
     setSetting(key, value) {
+        if (!this.storage || !key) return false;
+        
         try {
-            if (!this.storage) {
-                console.error('Хранилище недоступно');
-                return false;
-            }
-            
             this.storage.setItem(key, value);
-            console.log(`Настройка ${key} сохранена: ${value}`);
             return true;
         } catch (error) {
-            console.error(`Ошибка установки настройки ${key}:`, error);
+            console.error(`Error setting ${key}:`, error);
             return false;
         }
     }
 
     clearSettings() {
+        if (!this.storage) return false;
+        
         try {
-            if (!this.storage) {
-                console.error('Хранилище недоступно');
-                return false;
-            }
-            
             this.storage.clear();
             return true;
         } catch (error) {
-            console.error('Ошибка очистки настроек:', error);
             return false;
         }
     }
 
     removeSetting(key) {
+        if (!this.storage || !key) return false;
+        
         try {
-            if (!this.storage) {
-                console.error('Хранилище недоступно');
-                return false;
-            }
-            
             this.storage.removeItem(key);
             return true;
         } catch (error) {
-            console.error(`Ошибка удаления настройки ${key}:`, error);
             return false;
         }
     }
 
     hasSettings() {
         return this.storage && this.storage.length > 0;
-    }
-
-    isStorageAvailable() {
-        try {
-            if (!this.storage) return false;
-            
-            const testKey = '__storage_test__';
-            this.storage.setItem(testKey, testKey);
-            const result = this.storage.getItem(testKey) === testKey;
-            this.storage.removeItem(testKey);
-            return result;
-        } catch (error) {
-            console.error('Ошибка проверки доступности хранилища:', error);
-            return false;
-        }
     }
 }

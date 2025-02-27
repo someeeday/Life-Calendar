@@ -6,103 +6,162 @@ import { Footer } from './components/Footer.js';
 
 class App {
     constructor() {
+        // Инициализация компонентов
+        this.initComponents();
+        
+        // Делаем приложение доступным глобально для других компонентов
+        window.app = this;
+
+        // Настраиваем основную логику приложения
+        this.setupMainLogic();
+        
+        // Оптимизация UI и производительности
+        this.setupUIOptimizations();
+        
+        // Журналирование платформы
+        this.logPlatformInfo();
+    }
+    
+    initComponents() {
         this.telegram = new TelegramService();
+        
+        // Инициализация только критически важных компонентов в конструкторе
         this.components = {
             calendar: new Calendar('#lifeCanvas'),
-            datePicker: new DatePicker('#birthdate-input'),
             settings: new Settings('#settingsForm'),
+            datePicker: new DatePicker('#birthdate-input'),
             footer: new Footer('.footer')
         };
-        
-        this.init();
-        this.setupEventListeners();
-        this.debounceTimeout = null;
-        this.isScrolling = false;
     }
 
-    init() {
-        // Сначала сохраняем ссылку на приложение глобально
-        window.app = this;
-        
-        // Инициализируем базовые компоненты
+    setupMainLogic() {
+        // Инициализация Telegram прежде всего
         this.telegram.init();
+
+        // Модульная инициализация компонентов
+        this.initializeComponents();
+        
+        // Настройка обработчиков событий
+        this.setupEventListeners();
+        
+        // Применение настроек и стилей соответствующей платформы
+        this.applyPlatformSettings();
+    }
+    
+    initializeComponents() {
+        // Инициализация компонентов в правильном порядке зависимостей
         this.components.calendar.init();
         
-        // Затем инициализируем настройки, которые восстановят состояние календаря
+        // Затем инициализируем настройки и восстанавливаем состояние календаря
         this.components.settings.init();
         
-        // Инициализируем оставшиеся компоненты
+        // Инициализация менее критичных компонентов
         this.components.datePicker.init();
-        this.components.footer.init();
         
-        if (!this.telegram.isTelegramWebApp()) {
-            this.components.settings.showBrowserNotice();
-            document.body.classList.add('browser-mode');
-            console.log('🌐 Приложение открыто в браузере');
-        } else {
-            document.body.classList.add('webapp-mode');
-            console.log('📱 Приложение открыто в Telegram WebApp');
-        }
-        this.optimizeScroll();
-        this.deferNonCriticalOperations();
-    }
-
-    optimizeScroll() {
-        // Оптимизация обработки скролла
-        window.addEventListener('scroll', () => {
-            if (this.debounceTimeout) clearTimeout(this.debounceTimeout);
-            
-            if (!this.isScrolling) {
-                this.isScrolling = true;
-                document.body.classList.add('is-scrolling');
-            }
-
-            this.debounceTimeout = setTimeout(() => {
-                this.isScrolling = false;
-                document.body.classList.remove('is-scrolling');
-            }, 150);
-        }, { passive: true });
-    }
-
-    deferNonCriticalOperations() {
-        // Отложенная загрузка неважных операций
+        // Отложенная инициализация футера для лучшей производительности
         requestIdleCallback(() => {
             this.components.footer.init();
-            this.components.settings.showBrowserNotice();
-        });
+        }, { timeout: 1000 });
     }
 
     setupEventListeners() {
-        // Обработчик изменения даты
-        this.components.datePicker.input?.addEventListener('change', () => {
-            const birthdate = this.components.datePicker.input.value;
-            if (birthdate && this.components.datePicker.isValidDate(birthdate)) {
-                const livedWeeks = this.components.settings.calculateLivedWeeks(birthdate);
-                this.components.calendar.draw(livedWeeks);
+        // Используем делегирование событий где возможно
+        document.addEventListener('change', e => {
+            // Обработка изменения даты
+            if (e.target.id === 'birthdate-input') {
+                this.handleBirthdateChange(e.target.value);
             }
         });
 
         // Обработчик для кнопки создания календаря
-        document.getElementById('create-calendar-btn')?.addEventListener('click', () => {
-            this.components.settings.handleFormSubmit();
-        });
-
-        // Обработчик для ссылки автора - используем handleLinkClick вместо toggleHiddenContent
-        document.getElementById('author-link')?.addEventListener('click', (e) => {
-            this.components.footer.handleLinkClick(e);
-        });
+        const createButton = document.getElementById('create-calendar-btn');
+        if (createButton) {
+            createButton.addEventListener('click', () => 
+                this.components.settings.handleFormSubmit());
+        }
+    }
+    
+    handleBirthdateChange(birthdate) {
+        if (birthdate && this.components.datePicker.isValidDate(birthdate)) {
+            const livedWeeks = this.components.settings.calculateLivedWeeks(birthdate);
+            this.components.calendar.draw(livedWeeks);
+        }
+    }
+    
+    applyPlatformSettings() {
+        // Применение классов и стилей в зависимости от платформы
+        if (!this.telegram.isTelegramWebApp()) {
+            document.body.classList.add('browser-mode');
+            requestIdleCallback(() => {
+                this.components.settings.showBrowserNotice();
+            });
+        } else {
+            document.body.classList.add('webapp-mode');
+            document.body.classList.add('is-telegram');
+        }
+    }
+    
+    setupUIOptimizations() {
+        // Оптимизация обработки скролла
+        this.optimizeScrolling();
+        
+        // Отложенная загрузка неважных компонентов
+        this.deferNonCriticalOperations();
+    }
+    
+    optimizeScrolling() {
+        let scrollTimeout;
+        let isScrolling = false;
+        
+        // Использование пассивных слушателей для улучшения производительности
+        window.addEventListener('scroll', () => {
+            if (!isScrolling) {
+                isScrolling = true;
+                document.body.classList.add('is-scrolling');
+            }
+            
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                isScrolling = false;
+                document.body.classList.remove('is-scrolling');
+            }, 150);
+        }, { passive: true });
+    }
+    
+    deferNonCriticalOperations() {
+        // Используем IntersectionObserver для ленивой загрузки
+        if ('IntersectionObserver' in window) {
+            const lazyElements = document.querySelectorAll('.lazy-load');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('loaded');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            });
+            
+            lazyElements.forEach(el => observer.observe(el));
+        }
+    }
+    
+    logPlatformInfo() {
+        if (!this.telegram.isTelegramWebApp()) {
+            console.log('🌐 Приложение открыто в браузере');
+        } else {
+            console.log('📱 Приложение открыто в Telegram WebApp');
+        }
     }
 }
 
-// Сделаем экземпляр приложения глобально доступным
-let app;
-
-// Инициализация приложения после полной загрузки DOM
+// Загружаем приложение после загрузки DOM
 document.addEventListener('DOMContentLoaded', () => {
-    // Создаем экземпляр приложения
-    app = new App();
-    
-    // Эти функции теперь можно вызывать, т.к. window.app уже существует
-    window.changeLanguage = (lang) => app.components.settings.handleLanguageChange(lang);
-    window.changeTheme = (theme) => app.components.settings.handleThemeChange(theme);
+    // Используем requestAnimationFrame для оптимального старта
+    requestAnimationFrame(() => {
+        const app = new App();
+        
+        // Экспортируем публичные методы для глобального доступа
+        window.changeLanguage = (lang) => app.components.settings.handleLanguageChange(lang);
+        window.changeTheme = (theme) => app.components.settings.handleThemeChange(theme);
+    });
 });

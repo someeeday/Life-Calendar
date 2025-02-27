@@ -115,7 +115,20 @@ export class Settings {
     handleLanguageChange(lang) {
         this.updateLanguage(lang);
         this.storage.setSetting('language', lang);
-        this.emit('languageChanged', lang);
+        
+        // Отправляем событие об изменении языка
+        const event = new CustomEvent('languageChanged', { 
+            detail: lang,
+            bubbles: true 
+        });
+        document.dispatchEvent(event);
+        
+        // Дополнительно используем window для совместимости
+        if (typeof window.dispatchEvent === 'function') {
+            window.dispatchEvent(new CustomEvent('languageChanged', { 
+                detail: lang 
+            }));
+        }
         
         // Обновляем календарь и футер
         if (window.app?.components?.calendar) {
