@@ -209,7 +209,7 @@ export class Settings {
         // Проверяем, было ли уже закрыто уведомление
         const wasNoticeClosed = this.storage.getSetting('noticeClosed') === 'true';
         
-        if (wasNoticeClosed) {
+        if (wasNoticeClosed || window.app.telegram) {
             return;
         }
 

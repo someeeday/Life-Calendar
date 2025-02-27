@@ -1,6 +1,7 @@
 export class StorageService {
     constructor() {
-        this.storage = window.localStorage;
+        this.isTelegram = typeof window.Telegram !== 'undefined';
+        this.storage = this.isTelegram ? window.Telegram.WebApp.storage : window.localStorage;
         this.defaultSettings = {
             theme: 'light',
             language: 'ru',
