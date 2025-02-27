@@ -75,6 +75,17 @@ export class TelegramService {
         if (!this.isTelegramWebApp()) {
             console.log("🌐 Режим браузера: отправка тестовых данных через прокси");
             isBrowserMode = true;
+
+            // Проверяем доступность health API
+            const healthCheck = await this.simpleHealthCheck();
+            if (healthCheck.status !== "healthy") {
+                console.error("❌ Health API недоступен, данные не будут отправлены");
+                return {
+                    success: false,
+                    browserMode: true,
+                    message: "Health API недоступен, данные не отправлены"
+                };
+            }
             
             // В режиме браузера используем тестовый ID
             userId = this.defaultParams.telegram_id;
