@@ -50,8 +50,8 @@ export class TelegramService {
         this.tg.expand();
         this.tg.ready();
 
-        // Логируем данные пользователя для диагностики
-        if (this.tg?.initDataUnsafe?.user) {
+        // Логируем данные пользователя для диагностики только в режиме браузера
+        if (!this.isTelegramWebApp() && this.tg?.initDataUnsafe?.user) {
             console.log("👤 User ID:", this.tg.initDataUnsafe.user.id);
             console.log("📱 Platform:", this.tg.platform);
             console.log("📊 Version:", this.tg.version);
@@ -76,9 +76,8 @@ export class TelegramService {
             console.log("🌐 Режим браузера: отправка тестовых данных через прокси");
             isBrowserMode = true;
 
-            // Проверяем доступность health API
-            const healthCheck = await this.simpleHealthCheck();
-            if (healthCheck.status !== "healthy") {
+            const isHealthy = await this.checkHealth();
+            if (!isHealthy) {
                 console.error("❌ Health API недоступен, данные не будут отправлены");
                 return {
                     success: false,
@@ -405,6 +404,33 @@ export class TelegramService {
                 status: "unavailable", 
                 message: "API недоступен. Проверьте соединение с интернетом."
             };
+        }
+    }
+
+    async checkHealth() {
+        try {
+            const response = await this.fetchWithTimeout(this.healthUrl, {
+                method: 'GET',
+                headers: { 'Accept': 'application/json' }
+            }, this.timeouts.health);
+
+            if (response.ok) {
+                const data = await response.json();
+                if (!this.isTelegramWebApp()) {
+                    console.log(`✅ Health API статус: ${data.status}`);
+                }
+                return data.status === "healthy";
+            } else {
+                if (!this.isTelegramWebApp()) {
+                    console.error(`❌ Health API вернул ошибку: ${response.status}`);
+                }
+                return false;
+            }
+        } catch (error) {
+            if (!this.isTelegramWebApp()) {
+                console.error("❌ Ошибка при обращении к health API:", error.message);
+            }
+            return false;
         }
     }
 
