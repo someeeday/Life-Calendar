@@ -19,10 +19,6 @@ export class TelegramService {
         // Формируем URL эндпоинтов от базового URL
         this.apiUrl = `${this.baseUrl}/webhook/`;
         this.healthUrl = `${this.baseUrl}/health`;
-        this.dbHealthUrl = `${this.baseUrl}/health/db`;
-        
-        // Резервный URL всегда прямой через HTTP
-        this.backupApiUrl = 'http://217.144.186.159:8080/webhook/';
         
         this.timeouts = {
             health: 3000,
@@ -32,7 +28,6 @@ export class TelegramService {
 
     init() {
         if (!this.tg) {
-            console.log("🌐 Режим браузера");
             return;
         }
 
@@ -81,12 +76,11 @@ export class TelegramService {
             }
         };
         
-        return await this.sendDataWithRetry(data);
+        return await this.sendData(data);
     }
     
-    // Новый метод для отправки данных с повторными попытками
-    async sendDataWithRetry(data) {
-        // Пробуем основной URL
+    // Метод для отправки данных
+    async sendData(data) {
         try {
             const response = await this.fetchWithTimeout(this.apiUrl, {
                 method: 'POST',
@@ -114,32 +108,6 @@ export class TelegramService {
                 throw new Error(`HTTP error: ${response.status} - ${errorText}`);
             }
         } catch (error) {
-            // Если основной URL не сработал, пробуем альтернативный URL
-            if (this.apiUrl !== this.backupApiUrl) {
-                try {
-                    const backupResponse = await this.fetchWithTimeout(this.backupApiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(data)
-                    }, this.timeouts.data);
-                    
-                    if (backupResponse.ok) {
-                        const result = await backupResponse.json();
-                        return { success: true, data: result };
-                    } else {
-                        const errorText = await backupResponse.text();
-                        throw new Error(`Ошибка запасного URL: ${backupResponse.status} - ${errorText}`);
-                    }
-                } catch (backupError) {
-                    return { 
-                        success: false, 
-                        error: `Не удалось отправить данные: ${backupError.message}`,
-                        userId: data.payload.telegram_id
-                    };
-                }
-            }
-            
-            // Все попытки не удались
             return { 
                 success: false, 
                 error: `Не удалось отправить данные: ${error.message}`,
@@ -227,20 +195,11 @@ export class TelegramService {
 
             if (response.ok) {
                 const data = await response.json();
-                if (!this.isTelegramWebApp()) {
-                    console.log(`✅ Health API статус: ${data.status}`);
-                }
                 return data.status === "healthy";
             } else {
-                if (!this.isTelegramWebApp()) {
-                    console.error(`❌ Health API вернул ошибку: ${response.status}`);
-                }
                 return false;
             }
         } catch (error) {
-            if (!this.isTelegramWebApp()) {
-                console.error("❌ Ошибка при обращении к health API:", error.message);
-            }
             return false;
         }
     }

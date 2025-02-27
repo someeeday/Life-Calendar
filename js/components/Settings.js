@@ -76,9 +76,6 @@ export class Settings {
         this.isSubmitting = true;
         
         try {
-            // Показываем индикатор загрузки
-            this.showLoading(true);
-            
             // Обновляем календарь
             const livedWeeks = this.calculateLivedWeeks(birthdate);
             window.app.components.calendar.draw(livedWeeks);
@@ -104,7 +101,6 @@ export class Settings {
             const userId = window.app.telegram.tg?.initDataUnsafe?.user?.id || 'unknown';
             this.showError(`${translations[document.documentElement.lang].errorCreating} (ID: ${userId})`);
         } finally {
-            this.showLoading(false);
             this.isSubmitting = false;
         }
     }
@@ -392,16 +388,6 @@ export class Settings {
         const button = document.getElementById('create-calendar-btn');
         if (!button) return;
         
-        if (isLoading) {
-            // Сохраняем оригинальный текст кнопки
-            button.dataset.originalText = button.textContent;
-            // Добавляем индикатор загрузки
-            button.textContent = '⏳ ' + translations[document.documentElement.lang].loading;
-            button.disabled = true;
-        } else {
-            // Восстанавливаем оригинальный текст
-            button.textContent = button.dataset.originalText || translations[document.documentElement.lang].createCalendar;
-            button.disabled = false;
-        }
+        button.disabled = isLoading;
     }
 }
