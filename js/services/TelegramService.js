@@ -50,65 +50,22 @@ export class TelegramService {
     
     // Метод для отправки данных пользователя
     async sendUserData(birthdate) {
-        let userId;
-        
-        // В режиме браузера делаем реальный запрос через прокси
         if (!this.isTelegramWebApp()) {
             const isHealthy = await this.checkHealth();
             if (!isHealthy) {
                 return {
                     success: false,
-                    browserMode: true,
                     message: "Health API недоступен, данные не отправлены"
                 };
             }
-            
-            // Форматируем данные для API
-            const data = {
-                event_type: "birthday",
-                payload: {
-                    telegram_id: userId,
-                    date: this.formatDateForApi(birthdate)
-                }
+            return {
+                success: true,
+                message: "Health API доступен"
             };
-            
-            try {
-                // Отправляем запрос через наш прокси
-                const response = await this.fetchWithTimeout(this.apiUrl, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                }, this.timeouts.data);
-                
-                if (response.ok) {
-                    const result = await response.json();
-                    return { 
-                        success: true, 
-                        browserMode: true,
-                        data: result
-                    };
-                } else {
-                    return {
-                        success: false,
-                        browserMode: true,
-                        message: "API вернул ошибку"
-                    };
-                }
-            } catch (error) {
-                this.checkApiStatusInBackground();
-                return {
-                    success: false,
-                    browserMode: true,
-                    message: "Ошибка отправки данных"
-                };
-            }
         }
         
         // Для реального Telegram WebApp используем обычную логику
-        userId = this.tg?.initDataUnsafe?.user?.id?.toString();
+        const userId = this.tg?.initDataUnsafe?.user?.id?.toString();
         if (!userId) {
             return {
                 success: false,
