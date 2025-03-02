@@ -20,6 +20,12 @@ class App {
         
         // Журналирование платформы
         this.logPlatformInfo();
+        
+        // Добавляем метрику версии
+        this.version = '1.0.1';
+        
+        // Проверяем версию при запуске
+        this.checkVersion();
     }
     
     initComponents() {
@@ -99,8 +105,33 @@ class App {
             document.body.classList.add('webapp-mode');
             document.body.classList.add('is-telegram');
         }
+
+        // Добавляем мета-тег для контроля кэширования
+        if (this.telegram.isTelegramWebApp()) {
+            const meta = document.createElement('meta');
+            meta.setAttribute('http-equiv', 'Cache-Control');
+            meta.setAttribute('content', 'no-cache, no-store, must-revalidate');
+            document.head.appendChild(meta);
+        }
     }
     
+    async checkVersion() {
+        if (!this.telegram.isTelegramWebApp()) return;
+
+        // Проверяем версию в localStorage
+        const savedVersion = localStorage.getItem('appVersion');
+        if (savedVersion !== this.version) {
+            // Если версия отличается, очищаем кэш
+            localStorage.clear();
+            localStorage.setItem('appVersion', this.version);
+            
+            // Перезагружаем приложение с новым параметром версии
+            const url = new URL(window.location.href);
+            url.searchParams.set('v', Date.now().toString());
+            window.location.href = url.toString();
+        }
+    }
+
     setupUIOptimizations() {
         // Оптимизация обработки скролла
         this.optimizeScrolling();

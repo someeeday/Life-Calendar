@@ -24,6 +24,11 @@ export class TelegramService {
             health: 3000,
             data: 5000
         };
+
+        // Добавляем версионирование
+        this.version = '1.0.1';
+        this.lastUpdateCheck = null;
+        this.forceUpdateInterval = 24 * 60 * 60 * 1000; // 24 часа
     }
 
     init() {
@@ -33,6 +38,58 @@ export class TelegramService {
 
         this.tg.expand();
         this.tg.ready();
+        
+        // Проверяем необходимость обновления
+        this.checkForUpdates();
+    }
+
+    async checkForUpdates() {
+        if (!this.tg) return;
+
+        const now = Date.now();
+        const lastUpdate = localStorage.getItem('lastWebAppUpdate');
+        
+        // Если прошло достаточно времени с последней проверки
+        if (!lastUpdate || (now - parseInt(lastUpdate)) > this.forceUpdateInterval) {
+            try {
+                // Проверяем версию на сервере
+                const response = await this.fetchWithTimeout(`${this.baseUrl}/version`, {
+                    headers: { 'Cache-Control': 'no-cache' }
+                }, 3000);
+                
+                if (response.ok) {
+                    const { version } = await response.json();
+                    if (version !== this.version) {
+                        // Если версия отличается, очищаем кэш и перезагружаем
+                        this.clearWebAppCache();
+                        return;
+                    }
+                }
+                
+                localStorage.setItem('lastWebAppUpdate', now.toString());
+            } catch (error) {
+                console.warn('Failed to check for updates:', error);
+            }
+        }
+    }
+
+    clearWebAppCache() {
+        if (!this.tg) return;
+
+        // Очищаем локальное хранилище
+        localStorage.clear();
+        
+        // Добавляем параметр с временной меткой для обхода кэша
+        const timestamp = Date.now();
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('v', timestamp.toString());
+        
+        // Перезагружаем WebApp
+        if (this.tg.reload) {
+            this.tg.reload();
+        } else {
+            window.location.href = currentUrl.toString();
+        }
     }
 
     isTelegramWebApp() {
