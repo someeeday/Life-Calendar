@@ -12,10 +12,7 @@ export class Calendar {
         this.weeksPerYear = 52;
         this.totalYears = 91;
         this.isMobile = document.body.classList.contains('is-mobile');
-        this.cellSize = this.isMobile ? 12 : 15;
-        this.padding = this.isMobile ? 60 : 80;
-        this.fontSize = this.isMobile ? 11 : 12;
-        this.cellGap = this.isMobile ? 1 : 2;
+        this.setMobileMode(this.isMobile);
         
         // Анимация последней недели
         this.animationFrame = null;
@@ -321,5 +318,19 @@ export class Calendar {
             y + this.cellSize / 2
         );
         this.ctx.restore();
+    }
+
+    setMobileMode(isMobile) {
+        this.cellSize = isMobile ? 12 : 15;
+        this.padding = isMobile ? 60 : 80;
+        this.fontSize = isMobile ? 11 : 12;
+        this.cellGap = isMobile ? 1 : 2;
+        
+        // Перерисовываем если уже есть данные
+        if (this.canvas) {
+            const livedWeeks = this.canvas.getAttribute('data-lived-weeks');
+            this.setupCanvas();
+            this.draw(parseInt(livedWeeks) || 0);
+        }
     }
 }

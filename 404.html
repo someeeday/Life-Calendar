@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Page Not Found</title>
+    <link rel="stylesheet" href="/css/404.css">
+</head>
+<body class="error-page">
+    <div class="error-container">
+        <div class="moving-404">
+            <h1>404</h1>
+        </div>
+        <p>Эта страница не существует</p>
+        <p><a href="/calendar">Перейти к Life Calendar</a></p>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const title = document.querySelector('.moving-404');
+            if (!title) return;
+
+            let frameId;
+            const maxRotate = 10; // Увеличиваем угол для более заметного эффекта
+            let currentX = 0;
+            let currentY = 0;
+            let targetX = 0;
+            let targetY = 0;
+
+            // Плавная анимация
+            function animate() {
+                // Плавное приближение к целевой позиции
+                currentX += (targetX - currentX) * 0.1;
+                currentY += (targetY - currentY) * 0.1;
+
+                title.style.transform = `
+                    perspective(1000px)
+                    rotateX(${currentY}deg)
+                    rotateY(${-currentX}deg)
+                    translateZ(50px)
+                `;
+
+                frameId = requestAnimationFrame(animate);
+            }
+
+            // Отслеживание движения мыши
+            document.addEventListener('mousemove', (e) => {
+                const rect = title.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+
+                // Вычисляем новые целевые углы относительно центра элемента
+                targetX = ((e.clientX - centerX) / window.innerWidth) * maxRotate;
+                targetY = ((e.clientY - centerY) / window.innerHeight) * maxRotate;
+            });
+
+            // Запускаем анимацию
+            animate();
+
+            // Сброс при уходе мыши
+            document.addEventListener('mouseleave', () => {
+                targetX = 0;
+                targetY = 0;
+            });
+
+            // Очистка при уничтожении
+            return () => cancelAnimationFrame(frameId);
+        });
+    </script>
+</body>
+</html>

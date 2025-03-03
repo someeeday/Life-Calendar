@@ -249,6 +249,7 @@ canvas {
 }
 
 .button--primary {
+    display: block !important; /* Принудительно показываем кнопку */
     background: var(--color-primary);
     color: white;
     font-weight: 500;
@@ -365,7 +366,7 @@ canvas {
 }
 
 .is-telegram .button {
-    display: none;
+    display: block !important;
 }
 
 .is-telegram .form-select,
