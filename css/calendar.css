@@ -707,14 +707,6 @@ canvas {
     margin: 0 2px;
 }
 
-.telegram-notice-actions {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 15px;
-    gap: 10px;
-    flex-wrap: wrap; /* Для адаптивности на узких экранах */
-}
-
 .telegram-notice .button-primary {
     background: #0088cc;
     color: white;
@@ -725,7 +717,6 @@ canvas {
     font-weight: 500;
     text-decoration: none;
     display: inline-block;
-    white-space: nowrap;
 }
 
 .telegram-notice .button-secondary {
@@ -736,7 +727,6 @@ canvas {
     border-radius: 4px;
     cursor: pointer;
     font-weight: 500;
-    white-space: nowrap;
 }
 
 .telegram-notice .close-button {

@@ -34,15 +34,12 @@ export class TelegramService {
     // Проверка здоровья API
     async checkApiHealth() {
         try {
-            console.log('Checking API health');
             const response = await fetch(`${this.apiBaseUrl}/health`, {
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json'
                 }
             });
-            
-            console.log('Health check response:', response.status);
             
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
@@ -72,8 +69,6 @@ export class TelegramService {
                 }
             };
             
-            console.log('Sending birthdate data:', payload);
-            
             const response = await fetch(this.apiBaseUrl, {
                 method: 'POST',
                 headers: {
@@ -81,8 +76,6 @@ export class TelegramService {
                 },
                 body: JSON.stringify(payload)
             });
-            
-            console.log('API response status:', response.status);
             
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);

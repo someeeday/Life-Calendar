@@ -1,8 +1,8 @@
 export class StorageService {
     constructor() {
         this.defaultSettings = {
-            theme: 'light',   // Светлая тема по умолчанию
-            language: 'ru',   // Русский язык по умолчанию
+            theme: 'dark',   // Светлая тема по умолчанию
+            language: 'en',   // Русский язык по умолчанию
             birthdate: ''     // Пустая дата по умолчанию
         };
         
