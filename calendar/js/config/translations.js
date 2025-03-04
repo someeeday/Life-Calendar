@@ -8,7 +8,7 @@ export const translations = {
         light: 'Светлая',
         dark: 'Тёмная',
         createCalendar: 'Создать календарь',
-        datePlaceholder: 'ДД.ММ.ГГГ',
+        datePlaceholder: 'ДД.ММ.ГГГГ',
         invalidDate: 'Пожалуйста, введите дату рождения',
         errorCreating: 'Ошибка при создании календаря',
         confirmOldAge: 'Возраст превышает 90 лет. Отобразить полностью заполненный календарь?',

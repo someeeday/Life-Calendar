@@ -34,6 +34,9 @@ class App {
         
         // Настройка обработчиков событий
         this.setupEventListeners();
+
+        // Восстанавливаем состояние календаря при загрузке
+        this.components.settings.restoreCalendarState();
     }
     
     setupEventListeners() {

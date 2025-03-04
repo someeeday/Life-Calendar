@@ -24,6 +24,13 @@ export class Settings {
         
         // Восстанавливаем календарь при загрузке
         this.restoreCalendarState();
+
+        // Показываем модальное окно только в браузере, а не в WebApp
+        if (!window.Telegram?.WebApp?.initDataUnsafe?.user) {
+            setTimeout(() => {
+                this.showTelegramModal();
+            }, 1500);
+        }
     }
 
     applyStoredSettings() {
@@ -222,86 +229,129 @@ export class Settings {
         if (this.themeSelect) this.themeSelect.value = settings.theme;
     }
 
-    showBrowserNotice() {
-        // Проверяем, было ли уже закрыто уведомление
-        const wasNoticeClosed = this.storage.getSetting('noticeClosed') === 'true';
+    showTelegramModal() {
+        // Проверяем, было ли отложено показ
+        const postponedUntil = parseInt(this.storage.getSetting('postponedUntil') || '0', 10);
+        const now = Date.now();
         
-        if (wasNoticeClosed || window.app.telegram) {
+        // Не показываем, если время отложенного показа не пришло
+        if (postponedUntil && now < postponedUntil) {
             return;
         }
 
-        const settings = this.storage.getAllSettings();
-        const notice = document.createElement('div');
-        notice.className = 'browser-notice';
-        
-        const closeButton = document.createElement('span');
-        closeButton.innerHTML = '&times;'; // × символ
-        closeButton.className = 'close-button';
-        closeButton.style.cssText = `
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            font-size: 20px;
-            color: #856404;
-        `;
-        
-        // При закрытии сохраняем состояние
-        closeButton.addEventListener('click', () => {
-            this.storage.setSetting('noticeClosed', 'true');
-            notice.remove();
-        });
-
-        const link = document.createElement('a');
-        link.href = 'https://t.me/LifeCalendarRobot';
-        link.target = '_blank';
-        link.textContent = '@LifeCalendarRobot';
-        link.style.color = '#856404';
-        link.style.textDecoration = 'underline';
-
-        const messageContainer = document.createElement('div');
-        messageContainer.style.marginRight = '20px'; // Место для крестика
-
-        // Разбиваем текст на части до и после @LifeCalendarRobot
-        const message = translations[settings.language].openBot;
-        const [before, after] = message.split('@LifeCalendarRobot');
-        
-        messageContainer.appendChild(document.createTextNode(before));
-        messageContainer.appendChild(link);
-        if (after) {
-            messageContainer.appendChild(document.createTextNode(after));
-        }
-
-        notice.style.cssText = `
-            background: #fff3cd;
-            color: #856404;
-            padding: 10px;
-            border-radius: 4px;
-            margin-top: 10px;
-            text-align: center;
-            animation: fadeIn 0.3s ease;
-            position: relative;
-        `;
-
-        notice.appendChild(messageContainer);
-        notice.appendChild(closeButton);
-        this.form.appendChild(notice);
-
-        // Обновляем уведомление при смене языка
-        this.on('languageChanged', (lang) => {
-            const newMessage = translations[lang].openBot;
-            const [newBefore, newAfter] = newMessage.split('@LifeCalendarRobot');
-            messageContainer.innerHTML = '';
-            messageContainer.appendChild(document.createTextNode(newBefore));
-            messageContainer.appendChild(link.cloneNode(true));
-            if (newAfter) {
-                messageContainer.appendChild(document.createTextNode(newAfter));
+        try {
+            // Создаем модальное окно
+            const modal = document.createElement('div');
+            modal.className = 'telegram-modal';
+            modal.style.position = 'fixed';
+            modal.style.zIndex = '9999';
+            
+            const notice = document.createElement('div');
+            notice.className = 'telegram-notice';
+            
+            // Создаем заголовок с иконкой
+            const header = document.createElement('div');
+            header.className = 'telegram-notice-header';
+            
+            const icon = document.createElement('div');
+            icon.className = 'telegram-icon';
+            
+            const title = document.createElement('div');
+            title.className = 'telegram-notice-title';
+            title.textContent = 'Telegram';
+            
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'close-button';
+            closeBtn.innerHTML = '&times;';
+            closeBtn.style.cursor = 'pointer';
+            closeBtn.addEventListener('click', () => {
+                this.closeModal(modal);
+            });
+            
+            header.appendChild(icon);
+            header.appendChild(title);
+            header.appendChild(closeBtn);
+            
+            // Создаем содержимое
+            const content = document.createElement('div');
+            content.className = 'telegram-notice-content';
+            
+            const message = document.createElement('p');
+            const lang = document.documentElement.lang || 'ru';
+            message.textContent = translations[lang].openBot.replace('@LifeCalendarRobot', '').trim();
+            
+            const actions = document.createElement('div');
+            actions.className = 'telegram-notice-actions';
+            actions.style.display = 'flex';
+            actions.style.justifyContent = 'space-between';
+            
+            // Кнопка "Закрыть" (отложить на день)
+            const closeButton = document.createElement('button');
+            closeButton.className = 'button-secondary';
+            closeButton.textContent = lang === 'ru' ? 'Закрыть' : 'Close';
+            closeButton.style.cursor = 'pointer';
+            closeButton.style.flex = '1';
+            closeButton.style.marginRight = '10px';
+            closeButton.addEventListener('click', () => {
+                // Откладываем на 24 часа
+                const postponeTime = Date.now() + (24 * 60 * 60 * 1000);
+                this.storage.setSetting('postponedUntil', postponeTime.toString());
+                this.closeModal(modal);
+            });
+            
+            // Кнопка перехода к боту
+            const openBotBtn = document.createElement('a');
+            openBotBtn.href = 'https://t.me/LifeCalendarRobot';
+            openBotBtn.target = '_blank';
+            openBotBtn.className = 'button-primary';
+            openBotBtn.textContent = '@LifeCalendarRobot';
+            openBotBtn.style.textDecoration = 'none';
+            openBotBtn.style.cursor = 'pointer';
+            openBotBtn.style.flex = '1';
+            
+            // Добавляем кнопки
+            actions.appendChild(closeButton);
+            actions.appendChild(openBotBtn);
+            
+            content.appendChild(message);
+            content.appendChild(actions);
+            
+            // Собираем все вместе
+            notice.appendChild(header);
+            notice.appendChild(content);
+            modal.appendChild(notice);
+            
+            if (document.body) {
+                document.body.appendChild(modal);
+                
+                // Клик по фону закрывает модальное окно
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        this.closeModal(modal);
+                    }
+                });
+                
+                // Делаем модальное окно видимым (для анимации)
+                setTimeout(() => {
+                    modal.classList.add('active');
+                }, 10);
             }
-        });
 
-        // Сохраняем состояние уведомления
-        this.storage.setSetting('noticeClosed', 'false');
+            // Обновляем текст при смене языка
+            this.on('languageChanged', (lang) => {
+                message.textContent = translations[lang].openBot.replace('@LifeCalendarRobot', '').trim();
+                closeButton.textContent = lang === 'ru' ? 'Закрыть' : 'Close';
+            });
+        } catch (error) {
+            /* обрабатываем ошибки тихо */
+        }
+    }
+    
+    closeModal(modal) {
+        modal.classList.remove('active');
+        setTimeout(() => {
+            modal.remove();
+        }, 300);
     }
 
     showError(message) {
