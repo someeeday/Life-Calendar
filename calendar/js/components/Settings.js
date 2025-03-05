@@ -1,26 +1,33 @@
-import { translations } from '../config/translations.js';
-import { themes } from '../config/themes.js';
 import { StorageService } from '../services/StorageService.js';
 import { TelegramService } from '../services/TelegramService.js';
 
 export class Settings {
     constructor(selector) {
         this.form = document.querySelector(selector);
-        this.langSelect = document.querySelector('#lang-select');
-        this.themeSelect = document.querySelector('#theme-select');
         this.storage = new StorageService();
         this.telegram = new TelegramService();
         this.eventListeners = {};
         this.errorElement = document.getElementById('birthdate-error');
         this.isSubmitting = false; // Флаг для предотвращения множественных запросов
+        this.translations = {
+            invalidDate: 'Please enter your birth date',
+            errorCreating: 'Error creating calendar',
+            createCalendar: 'Create Calendar',
+            confirmOldAge: 'Age exceeds 90 years. Show fully filled calendar?',
+            errorFetch: 'Failed to connect to the server',
+            retryConnection: 'Retry',
+            connectionError: 'Problem connecting to the server. Please check your internet connection.',
+            serverError: 'Server error. Please try again later.',
+            usingDefaults: 'Using backup connection...',
+            corsError: 'Cross-origin request issues, using local mode.',
+            debugInfo: 'Debug information',
+            contactText: 'If you have any questions or suggestions, message me:'
+        };
     }
 
     init() {
         this.applyStoredSettings();
         this.setupEventListeners();
-        this.updateAllTranslations();
-        this.syncSelectsWithSettings();
-        this.setupLanguageAndThemeHandlers();
         
         // Восстанавливаем календарь при загрузке
         this.restoreCalendarState();
@@ -35,36 +42,13 @@ export class Settings {
 
     applyStoredSettings() {
         const settings = this.storage.getAllSettings();
-        this.updateLanguage(settings.language);
-        this.updateTheme(settings.theme);
     }
 
     setupEventListeners() {
-        this.langSelect?.addEventListener('change', (e) => this.handleLanguageChange(e.target.value));
-        this.themeSelect?.addEventListener('change', (e) => this.handleThemeChange(e.target.value));
-        
         // Обработчик для формы
         this.form?.addEventListener('submit', (e) => {
             e.preventDefault();
             this.handleFormSubmit();
-        });
-
-        // Слушаем системные изменения темы
-        window.matchMedia('(prefers-color-scheme: dark)').addListener((e) => {
-            this.handleSystemThemeChange(e.matches ? 'dark' : 'light');
-        });
-    }
-
-    setupLanguageAndThemeHandlers() {
-        const langSelect = document.getElementById('lang-select');
-        const themeSelect = document.getElementById('theme-select');
-
-        langSelect?.addEventListener('change', (e) => {
-            this.handleLanguageChange(e.target.value);
-        });
-
-        themeSelect?.addEventListener('change', (e) => {
-            this.handleThemeChange(e.target.value);
         });
     }
 
@@ -72,7 +56,7 @@ export class Settings {
         const birthdate = document.getElementById('birthdate-input')?.value;
         
         if (!birthdate) {
-            this.showError(translations[document.documentElement.lang].invalidDate);
+            this.showError('invalidDate');
             return;
         }
         
@@ -102,8 +86,8 @@ export class Settings {
             
             this.hideError();
         } catch (error) {
-            console.error('Ошибка:', error);
-            this.showError(translations[document.documentElement.lang].errorCreating);
+            console.error('Error:', error);
+            this.showError('errorCreating');
         } finally {
             this.isSubmitting = false;
             this.showLoading(false);
@@ -117,194 +101,13 @@ export class Settings {
         return Math.floor((currentDate - birthDate) / (1000 * 60 * 60 * 24 * 7));
     }
 
-    handleLanguageChange(lang) {
-        this.updateLanguage(lang);
-        this.storage.setSetting('language', lang);
-        
-        const event = new CustomEvent('languageChanged', { 
-            detail: lang,
-            bubbles: true 
-        });
-        document.dispatchEvent(event);
-        
-        if (typeof window.dispatchEvent === 'function') {
-            window.dispatchEvent(new CustomEvent('languageChanged', { 
-                detail: lang 
-            }));
-        }
-        
-        if (window.app?.components?.calendar) {
-            window.app.components.calendar.setLanguage(lang);
-            const birthdate = document.getElementById('birthdate-input')?.value;
-            if (birthdate) {
-                const livedWeeks = this.calculateLivedWeeks(birthdate);
-                window.app.components.calendar.draw(livedWeeks);
-            } else {
-                window.app.components.calendar.draw();
-            }
-        }
-
-        if (window.app?.components?.footer && !window.app.components.footer.isHidden) {
-            window.app.components.footer.updateContent(lang);
-        }
-    }
-
-    handleThemeChange(theme) {
-        this.updateTheme(theme);
-        this.storage.setSetting('theme', theme);
-        this.emit('themeChanged', theme);
-        
-        if (window.app?.components?.calendar) {
-            window.app.components.calendar.updateTheme(theme);
-            
-            const birthdate = document.getElementById('birthdate-input')?.value;
-            if (birthdate) {
-                const livedWeeks = this.calculateLivedWeeks(birthdate);
-                window.app.components.calendar.draw(livedWeeks);
-            } else {
-                window.app.components.calendar.draw();
-            }
-        }
-    }
-
-    handleSystemThemeChange(theme) {
-        if (this.storage.getSetting('theme') === 'auto') {
-            this.updateTheme(theme);
-        }
-    }
-
-    updateLanguage(lang) {
-        document.documentElement.lang = lang;
-        this.updateAllTranslations();
-        this.langSelect.value = lang;
-    }
-
-    updateTheme(theme) {
-        document.documentElement.setAttribute('data-theme', theme);
-        const colors = themes[theme];
-        Object.entries(colors).forEach(([key, value]) => {
-            document.documentElement.style.setProperty(`--${key}-color`, value);
-        });
-        this.themeSelect.value = theme;
-    }
-
-    updateAllTranslations() {
-        const lang = document.documentElement.lang;
-        document.querySelectorAll('[data-text-ru], [data-text-en]').forEach(el => {
-            const text = el.getAttribute(`data-text-${lang}`);
-            if (text) {
-                if (el.tagName === 'BUTTON') {
-                    el.textContent = text;
-                } else {
-                    el.textContent = text;
-                }
-            }
-        });
-
-        document.querySelectorAll('[data-placeholder-ru], [data-placeholder-en]').forEach(el => {
-            const placeholder = el.getAttribute(`data-placeholder-${lang}`);
-            if (placeholder) el.placeholder = placeholder;
-        });
-    }
-
-    syncSelectsWithSettings() {
-        const settings = this.storage.getAllSettings();
-        if (this.langSelect) this.langSelect.value = settings.language;
-        if (this.themeSelect) this.themeSelect.value = settings.theme;
-    }
-
-    showBrowserNotice() {
-        const wasNoticeClosed = this.storage.getSetting('noticeClosed') === 'true';
-        
-        if (wasNoticeClosed || window.app.telegram) {
-            return;
-        }
-
-        const settings = this.storage.getAllSettings();
-        const notice = document.createElement('div');
-        notice.className = 'browser-notice';
-        
-        const closeButton = document.createElement('span');
-        closeButton.innerHTML = '&times;';
-        closeButton.className = 'close-button';
-        closeButton.style.cssText = `
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            font-size: 20px;
-            color: #856404;
-        `;
-        
-        closeButton.addEventListener('click', () => {
-            this.storage.setSetting('noticeClosed', 'true');
-            notice.remove();
-        });
-
-        const link = document.createElement('a');
-        link.href = 'https://t.me/LifeCalendarRobot';
-        link.target = '_blank';
-        link.textContent = '@LifeCalendarRobot';
-        link.style.color = '#856404';
-        link.style.textDecoration = 'underline';
-
-        const messageContainer = document.createElement('div');
-        messageContainer.style.marginRight = '20px';
-
-        const message = translations[settings.language].openBot;
-        const [before, after] = message.split('@LifeCalendarRobot');
-        
-        messageContainer.appendChild(document.createTextNode(before));
-        messageContainer.appendChild(link);
-        if (after) {
-            messageContainer.appendChild(document.createTextNode(after));
-        }
-
-        notice.style.cssText = `
-            background: #fff3cd;
-            color: #856404;
-            padding: 10px;
-            border-radius: 4px;
-            margin-top: 10px;
-            text-align: center;
-            animation: fadeIn 0.3s ease;
-            position: relative;
-        `;
-
-        notice.appendChild(messageContainer);
-        notice.appendChild(closeButton);
-        this.form.appendChild(notice);
-
-        this.on('languageChanged', (lang) => {
-            const newMessage = translations[lang].openBot;
-            const [newBefore, newAfter] = newMessage.split('@LifeCalendarRobot');
-            messageContainer.innerHTML = '';
-            messageContainer.appendChild(document.createTextNode(newBefore));
-            messageContainer.appendChild(link.cloneNode(true));
-            if (newAfter) {
-                messageContainer.appendChild(document.createTextNode(newAfter));
-            }
-        });
-
-        this.storage.setSetting('noticeClosed', 'false');
-    }
-
     showError(message) {
+        const errorMessage = this.translations[message] || message;
         if (this.errorElement) {
-            if (message.includes('ID:')) {
-                const parts = message.split('(ID:');
-                const baseMsg = parts[0].trim();
-                const idPart = parts[1].replace(')', '').trim();
-                
-                this.errorElement.innerHTML = `${baseMsg} <br><small>(ID: <strong>${idPart}</strong>)</small>`;
-            } else {
-                this.errorElement.textContent = message;
-            }
-            
+            this.errorElement.textContent = errorMessage;
             this.errorElement.style.display = 'block';
         } else {
-            console.error('Error:', message);
+            console.error('Error:', errorMessage);
         }
     }
 
@@ -334,24 +137,9 @@ export class Settings {
         }
     }
 
-    #validateSettings(settings) {
-        const validThemes = ['light', 'dark', 'auto'];
-        const validLanguages = ['ru', 'en'];
-        
-        return {
-            theme: validThemes.includes(settings.theme) ? settings.theme : 'light',
-            language: validLanguages.includes(settings.language) ? settings.language : 'ru'
-        };
-    }
-
     restoreCalendarState() {
         const settings = this.storage.getAllSettings();
         
-        if (window.app?.components?.calendar) {
-            window.app.components.calendar.setLanguage(settings.language);
-            window.app.components.calendar.updateTheme(settings.theme);
-        }
-
         const birthdate = settings.birthdate;
         if (birthdate && this.validateDate(birthdate)) {
             const birthdateInput = document.getElementById('birthdate-input');
@@ -429,8 +217,7 @@ export class Settings {
             content.className = 'telegram-notice-content';
             
             const message = document.createElement('p');
-            const lang = document.documentElement.lang || 'ru';
-            message.textContent = translations[lang].openBot.replace('@LifeCalendarRobot', '').trim();
+            message.textContent = 'Open @LifeCalendarRobot on Telegram to get started.';
             
             const actions = document.createElement('div');
             actions.className = 'telegram-notice-actions';
@@ -439,7 +226,7 @@ export class Settings {
             
             const closeButton = document.createElement('button');
             closeButton.className = 'button-secondary';
-            closeButton.textContent = lang === 'ru' ? 'Закрыть' : 'Close';
+            closeButton.textContent = 'Close';
             closeButton.style.cursor = 'pointer';
             closeButton.style.flex = '1';
             closeButton.style.marginRight = '10px';
@@ -481,11 +268,6 @@ export class Settings {
                     modal.classList.add('active');
                 }, 10);
             }
-
-            this.on('languageChanged', (lang) => {
-                message.textContent = translations[lang].openBot.replace('@LifeCalendarRobot', '').trim();
-                closeButton.textContent = lang === 'ru' ? 'Закрыть' : 'Close';
-            });
         } catch (error) {
             /* обрабатываем ошибки тихо */
         }

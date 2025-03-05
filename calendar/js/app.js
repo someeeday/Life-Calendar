@@ -1,7 +1,6 @@
 import { Calendar } from './components/Calendar.js';
 import { DatePicker } from './components/DatePicker.js';
 import { Settings } from './components/Settings.js';
-import { Footer } from './components/Footer.js';
 
 class App {
     constructor() {
@@ -21,7 +20,6 @@ class App {
             calendar: new Calendar('#lifeCanvas'),
             settings: new Settings('#settingsForm'),
             datePicker: new DatePicker('#birthdate-input'),
-            footer: new Footer('.footer')
         };
     }
 
@@ -30,7 +28,6 @@ class App {
         this.components.settings.init();
         this.components.calendar.init();
         this.components.datePicker.init();
-        this.components.footer.init();
         
         // Настройка обработчиков событий
         this.setupEventListeners();

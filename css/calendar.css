@@ -1,19 +1,15 @@
 :root {
     --transition-theme: background-color 0.3s ease, color 0.3s ease;
     --icon-color: #2c3e50;
-    --highlight-color: var(--color-hover);
+    --highlight-color: #1d4ed8;
     --calendar-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24'%3E%3Cpath fill='%23000000' d='M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z'/%3E%3C/svg%3E");
-    
-    /* Основные цвета */
-    --color-primary: #2563eb;    /* Более насыщенный синий */
-    --color-hover: #1d4ed8;      /* Темнее основного */
+    --color-primary: #2563eb;
+    --color-hover: #1d4ed8;
     --color-surface: #ffffff;
-    --color-background: #f8fafc;  /* Легкий серо-голубой */
-    --color-text: #0f172a;       /* Темно-синий */
-    --color-border: #e2e8f0;     /* Серо-голубой */
-    --color-focus: rgba(37, 99, 235, 0.2);  /* Синий с прозрачностью */
-    
-    /* Размеры и отступы */
+    --color-background: #f8fafc;
+    --color-text: #0f172a;
+    --color-border: #e2e8f0;
+    --color-focus: rgba(37, 99, 235, 0.2);
     --spacing-xs: 4px;
     --spacing-sm: 8px;
     --spacing-md: 16px;
@@ -21,29 +17,36 @@
     --radius-md: 8px;
     --header-height: 60px;
     --settings-width: 280px;
-    
-    /* Эффекты */
     --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
     --shadow-md: 0 4px 6px rgba(15, 23, 42, 0.1);
     --transition: all 0.2s ease;
-
-    /* Размеры для адаптивности */
     --cell-size-mobile: 16px;
     --cell-size-desktop: 20px;
     --font-size-mobile: 14px;
     --font-size-desktop: 16px;
     --cell-gap-mobile: 2px;
     --cell-gap-desktop: 3px;
+    --gradient-bg: #f5f5f3;
+    --background-light: #ffffff;
+    --text-light: #0f172a;
+    --grid-light: #e2e8f0;
+    --lived-light: #2563eb;
+    --future-light: #f1f5f9;
+    --background-dark: #0f172a;
+    --text-dark: #f1f5f9;
+    --grid-dark: #334155;
+    --lived-dark: #3b82f6;
+    --future-dark: #1e293b;
 }
 
 /* Темная тема */
 [data-theme="dark"] {
-    --color-background: #0f172a;    /* Темно-синий */
-    --color-surface: #1e293b;       /* Немного светлее фона */
-    --color-text: #f1f5f9;          /* Светло-серый */
-    --color-border: #334155;        /* Серо-синий */
-    --color-primary: #3b82f6;       /* Яркий синий */
-    --color-hover: #60a5fa;         /* Светлее основного */
+    --color-background: #0f172a;
+    --color-surface: #1e293b;
+    --color-text: #f1f5f9;
+    --color-border: #334155;
+    --color-primary: #3b82f6;
+    --color-hover: #60a5fa;
     --color-focus: rgba(59, 130, 246, 0.2);
     --calendar-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24'%3E%3Cpath fill='%23f1f5f9' d='M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z'/%3E%3C/svg%3E");
 }
@@ -56,15 +59,11 @@
 }
 
 body {
-    -webkit-transition: var(--transition-theme);
-    -moz-transition: var(--transition-theme);
-    -o-transition: var(--transition-theme);
     transition: var(--transition-theme);
     font-family: 'Roboto', 'Open Sans', 'Lato', system-ui, -apple-system, sans-serif;
     background: var(--color-background);
     color: var(--color-text);
     line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
     padding: var(--spacing-md);
     min-height: 100vh;
 }
@@ -74,30 +73,84 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    margin: 0 auto;
-    max-width: 1800px;
+    padding: var(--spacing-md);
+    background: var(--color-background);
 }
 
 .main {
-    flex: 1 0 auto;
+    display: flex;
+    gap: var(--spacing-lg);
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.controls {
+    width: 300px;
+    flex-shrink: 0;
+}
+
+.controls form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
 }
 
 .header {
     text-align: center;
     margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-md) 0;
+}
+
+.header h1 {
+    font-size: 2rem;
+    font-weight: 500;
+    color: var(--color-text);
+    margin-bottom: 0.5rem;
+}
+
+.header p {
+    font-size: 1rem;
+    color: var(--color-text);
+    opacity: 0.8;
+}
+
+.main {
+    flex: 1 0 auto;
+    padding: var(--spacing-lg);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+    background: var(--color-primary);
+    color: white;
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--color-border);
 }
 
 .header__title {
-    font-size: 1.75rem;
-    font-weight: 600;
-    color: var(--color-text);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+}
+
+.header__subtitle {
+    font-size: 1rem;
+    font-weight: 400;
+    color: white;
+    text-align: center;
+    margin-top: var(--spacing-xs);
 }
 
 /* Обновляем отступы контейнера */
 .container {
     display: flex;
-    gap: var(--spacing-lg);
-    margin-bottom: var(--spacing-sm); /* Уменьшили нижний отступ */
+    flex-direction: column;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
 }
 
 /* Панель настроек */
@@ -106,12 +159,9 @@ body {
     padding: var(--spacing-lg);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-md);
-    width: var(--settings-width);
+    width: 100%;
     flex-shrink: 0;
     height: fit-content;
-    align-self: flex-start;
-    position: sticky;
-    top: var(--spacing-md);
 }
 
 /* Форма настроек */
@@ -138,9 +188,6 @@ body {
 /* Стили для всех селекторов */
 .form-select,
 .form-input {
-    -webkit-transition: var(--transition);
-    -moz-transition: var(--transition);
-    -o-transition: var(--transition);
     transition: var(--transition);
     width: 100%;
     height: 40px;
@@ -150,7 +197,6 @@ body {
     background: var(--color-surface);
     color: var(--color-text);
     font-size: 14px;
-    transition: var(--transition);
 }
 
 .form-label {
@@ -166,18 +212,14 @@ body {
     background-repeat: no-repeat;
     background-position: right 12px center;
     padding-right: 32px;
-    transition: background-image 0.3s ease;
 }
 
 .form-select:focus {
-    appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%232563eb' d='M6 8.825L1.175 4 2.237 2.938 6 6.7l3.763-3.762L10.825 4z'/%3E%3C/svg%3E");
 }
 
 /* Стили для нативного date‑picker */
 .form-input[type="date"] {
-    -webkit-appearance: none;
-    -moz-appearance: none;
     appearance: none;
     background-color: var(--color-surface);
     font-size: 14px;
@@ -189,12 +231,10 @@ body {
     background-repeat: no-repeat;
     background-position: right 12px center;
     padding-right: 40px;
-    /* Иконка для светлой темы (чёрная) */
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24'%3E%3Cpath fill='%23000000' d='M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z'/%3E%3C/svg%3E");
 }
 
 [data-theme="dark"] .form-input[type="date"] {
-    /* Иконка для тёмной темы (белая) */
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24'%3E%3Cpath fill='%23ffffff' d='M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z'/%3E%3C/svg%3E");
 }
 
@@ -219,20 +259,19 @@ body {
 
 /* Календарь */
 .calendar {
+    flex: 1;
     background: var(--color-surface);
-    padding: var(--spacing-lg);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-md);
-    flex: 1;
-    overflow: hidden;
-    min-height: 500px; /* Минимальная высота для пустого состояния */
+    padding: var(--spacing-md);
+    min-height: 400px;
 }
 
 canvas {
     width: 100%;
     height: auto;
     display: block;
-    image-rendering: -webkit-optimize-contrast; /* Улучшаем чёткость на ретина дисплеях */
+    image-rendering: -webkit-optimize-contrast;
     image-rendering: crisp-edges;
 }
 
@@ -241,7 +280,7 @@ canvas {
     width: 100%;
     height: 40px;
     border: none;
-    border-radius: var(--radius-md);
+    border-radius: var (--radius-md);
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
@@ -249,7 +288,7 @@ canvas {
 }
 
 .button--primary {
-    display: block !important; /* Принудительно показываем кнопку */
+    display: block !important;
     background: var(--color-primary);
     color: white;
     font-weight: 500;
@@ -278,8 +317,8 @@ canvas {
     border: 1px solid var(--color-primary);
     font-weight: 500;
     transition: all 0.2s ease;
-    margin-top: var(--spacing-sm); /* Добавляем отступ сверху */
-    cursor: pointer; /* Явно указываем, что это кликабельный элемент */
+    margin-top: var(--spacing-sm);
+    cursor: pointer;
 }
 
 .button--secondary:hover {
@@ -304,56 +343,42 @@ canvas {
 
 /* Футер */
 .footer {
-    flex-shrink: 0;
-    padding: var(--spacing-sm) 0; /* Уменьшили padding */
-    margin-top: var(--spacing-sm); /* Уменьшили margin-top */
-    text-align: center;
+    background: transparent;
+    padding: var(--spacing-lg) var(--spacing-md);
+    margin-top: auto;
+    border-top: 1px solid var(--color-border);
 }
 
 .footer__content {
-    font-size: 14px;
-    color: var(--color-text);
+    max-width: 1400px;
+    margin: 0 auto;
+    text-align: center;
     opacity: 0.8;
 }
 
+.footer__links {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-md);
+}
+
 .footer__link {
-    color: var(--color-primary);
+    color: var(--color-text);
     text-decoration: none;
     font-weight: 500;
-    transition: all 0.2s ease;
+    transition: var(--transition);
+    padding: 0.5rem;
+    border-radius: var (--radius-md);
 }
 
 .footer__link:hover {
-    color: var(--color-hover);
-    text-decoration: none;
-    opacity: 0.9;
+    color: var(--color-primary);
 }
 
-/* Мобильная версия и адаптив */
-@media (max-width: 1024px) {
-    .container {
-        flex-direction: column;
-        gap: 0;
-    }
-
-    .settings {
-        position: relative;
-        top: 0;
-        width: 100%;
-        height: auto;
-        padding: var(--spacing-md);
-        margin-bottom: var(--spacing-md);
-    }
-
-    .settings__form {
-        gap: var(--spacing-md);
-    }
-
-    .form-select,
-    .form-input {
-        height: 44px;
-        font-size: 16px;
-    }
+.footer__copyright {
+    color: var(--color-text);
+    font-size: 0.875rem;
 }
 
 /* Стили для Telegram */
@@ -382,7 +407,7 @@ canvas {
 
 /* Новые определения для более современного вида календаря */
 .custom-calendar {
-    position: relative;  /* Меняем с absolute на relative */
+    position: relative;
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
@@ -396,7 +421,7 @@ canvas {
 }
 
 .custom-calendar.open {
-    max-height: 350px;  /* Фиксированная высота для плавной анимации */
+    max-height: 350px;
     opacity: 1;
     visibility: visible;
     transition-delay: 0s;
@@ -456,7 +481,7 @@ canvas {
     justify-content: center;
     height: 36px;
     font-size: 14px;
-    border-radius: var(--radius-md);
+    border-radius: var (--radius-md);
     cursor: pointer;
     transition: background-color 0.2s ease, color 0.2s ease;
     user-select: none;
@@ -529,10 +554,18 @@ canvas {
     :root {
         --spacing-lg: 16px;
         --spacing-md: 12px;
-        --cell-size-mobile: 24px; /* Увеличиваем размер ячеек на мобильных устройствах */
+        --cell-size-mobile: 24px;
         --cell-gap-mobile: 4px;
     }
     
+    .main {
+        flex-direction: column;
+    }
+
+    .controls {
+        width: 100%;
+    }
+
     .calendar {
         padding: var(--spacing-md);
         min-height: 400px;
@@ -757,4 +790,208 @@ canvas {
     .telegram-notice {
         max-width: 90%;
     }
+}
+
+/* Навигационная панель */
+.navbar {
+    background: transparent;
+    box-shadow: none;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+}
+
+.navbar__content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 var(--spacing-md);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.navbar h1 {
+    font-size: 2rem;
+    font-weight: 500;
+    color: var(--color-text);
+    margin: 0;
+}
+
+.navbar__links {
+    display: flex;
+    gap: var(--spacing-lg);
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--color-text);
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--radius-md);
+    transition: var(--transition);
+    border: 1px solid transparent;
+}
+
+.nav-link:hover {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+    background: color-mix(in srgb, var(--color-primary) 5%, transparent);
+}
+
+.nav-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.header__content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 3rem var(--spacing-md);
+    text-align: center;
+}
+
+.header__content h2 {
+    font-size: 2rem;
+    font-weight: 500;
+    color: var(--color-text);
+    margin-bottom: 2rem;
+}
+
+.settings-form {
+    max-width: 400px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: var(--spacing-lg) var(--spacing-md);
+}
+
+.calendar {
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    padding: var(--spacing-lg);
+}
+
+.footer {
+    background: transparent;
+    padding: var(--spacing-lg) var(--spacing-md);
+    margin-top: auto;
+    border-top: 1px solid var(--color-border);
+}
+
+.footer__content {
+    max-width: 1400px;
+    margin: 0 auto;
+    text-align: center;
+    opacity: 0.8;
+}
+
+.footer__links {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-md);
+}
+
+.footer__link {
+    color: var(--color-text);
+    text-decoration: none;
+    font-weight: 500;
+    transition: var(--transition);
+    padding: 0.5rem;
+    border-radius: var(--radius-md);
+}
+
+.footer__link:hover {
+    color: var(--color-primary);
+}
+
+.footer__copyright {
+    color: var(--color-text);
+    font-size: 0.875rem;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .navbar {
+        padding: 1rem 0;
+    }
+
+    .navbar__content {
+        flex-direction: column;
+        gap: var(--spacing-md);
+        text-align: center;
+    }
+
+    .navbar h1 {
+        font-size: 1.75rem;
+    }
+
+    .navbar__links {
+        gap: var(--spacing-md);
+    }
+
+    .nav-link {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    .header__content {
+        padding: 2rem var(--spacing-md);
+    }
+
+    .header__content h2 {
+        font-size: 1.5rem;
+    }
+}
+
+/* Исправляем стили для WebApp */
+.is-telegram .custom-calendar {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    background: var(--tg-theme-bg-color, var(--color-surface));
+    border: 1px solid var(--tg-theme-hint-color, var(--color-border));
+    width: 90%;
+    max-width: 320px;
+}
+
+.is-telegram .custom-calendar.open {
+    display: block;
+    max-height: 80vh;
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Добавляем стили для затемнения фона */
+.calendar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+}
+
+.calendar-overlay.active {
+    display: block;
+}
+
+.is-telegram .calendar-icon {
+    pointer-events: auto;
+    cursor: pointer;
+    opacity: 0.8;
 }

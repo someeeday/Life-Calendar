@@ -1,4 +1,3 @@
-import { translations } from '../config/translations.js';
 import { StorageService } from '../services/StorageService.js';
 
 export class DatePicker {
@@ -17,6 +16,12 @@ export class DatePicker {
         this.#currentDate = new Date();
         this.minYear = 1900;
         this.maxYear = this.#currentDate.getFullYear();
+
+        this.translations = {
+            months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+            weekDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            invalidDate: 'Please enter your birth date'
+        };
     }
 
     init() {
@@ -30,13 +35,25 @@ export class DatePicker {
     }
 
     setupEventListeners() {
-        // Input events
+        // Input events - используем 'beforeinput' и 'input'
+        this.input?.addEventListener('beforeinput', (e) => {
+            // Разрешаем только цифры и точки
+            if (e.data && !/[\d.]/.test(e.data)) {
+                e.preventDefault();
+            }
+        });
+        
         this.input?.addEventListener('input', this.handleInput.bind(this));
         this.input?.addEventListener('blur', this.validateDate.bind(this));
         this.input?.addEventListener('keypress', this.handleKeyPress.bind(this));
 
         // Calendar events
-        this.calendarIcon?.addEventListener('click', this.toggleCalendar.bind(this));
+        this.calendarIcon?.addEventListener('click', (e) => {
+            e.preventDefault(); // Предотвращаем действие по умолчанию
+            e.stopPropagation(); // Останавливаем всплытие
+            this.toggleCalendar();
+        });
+
         document.addEventListener('click', this.handleOutsideClick.bind(this));
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') this.closeCalendar();
@@ -46,9 +63,20 @@ export class DatePicker {
     handleInput(e) {
         try {
             this.hideError();
+            // Удаляем все кроме цифр
             let value = e.target.value.replace(/\D/g, '');
-            e.target.value = this.formatDate(value);
-            this.storage.setSetting('tempDate', e.target.value);
+            
+            // Форматируем ввод с точками
+            let formatted = '';
+            if (value.length > 0) formatted += value.slice(0, 2);
+            if (value.length > 2) formatted += '.' + value.slice(2, 4);
+            if (value.length > 4) formatted += '.' + value.slice(4, 8);
+            
+            // Устанавливаем отформатированное значение
+            e.target.value = formatted;
+            
+            // Сохраняем в Storage
+            this.storage.setSetting('tempDate', formatted);
         } catch (error) {
             console.error('Ошибка ввода даты:', error);
         }
@@ -72,7 +100,7 @@ export class DatePicker {
         if (!value) return true;
 
         if (!this.isValidDate(value)) {
-            this.showError(translations[document.documentElement.lang].invalidDate);
+            this.showError(this.translations.invalidDate);
             return false;
         }
 
@@ -141,7 +169,6 @@ export class DatePicker {
     buildCalendar() {
         if (!this.calendar) return;
 
-        const lang = document.documentElement.lang || 'ru';
         const currentDate = new Date();
         
         // Устанавливаем текущий месяц и год, если дата не выбрана
@@ -151,7 +178,7 @@ export class DatePicker {
 
         let calendarHtml = '<div class="calendar-header">';
         calendarHtml += '<select id="calendar-month">';
-        translations[lang].months.forEach((month, i) => {
+        this.translations.months.forEach((month, i) => {
             const selected = i === (currentMonth - 1) ? 'selected' : '';
             calendarHtml += `<option value="${i}" ${selected}>${month}</option>`;
         });
@@ -165,7 +192,7 @@ export class DatePicker {
         calendarHtml += '</select></div>';
 
         calendarHtml += '<div class="calendar-days">';
-        translations[lang].weekDays.forEach(day => {
+        this.translations.weekDays.forEach(day => {
             calendarHtml += `<div class="day-name">${day}</div>`;
         });
         calendarHtml += '</div>';

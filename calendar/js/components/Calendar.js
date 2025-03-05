@@ -1,18 +1,20 @@
-import { themes } from '../config/themes.js';
-import { translations } from '../config/translations.js';
-
 export class Calendar {
     constructor(selector) {
+        // Move translations here
+        this.translations = {
+            age: '← Age',
+            weeks: 'Weeks of Year →'
+        };
+
         this.canvas = document.querySelector(selector);
         this.ctx = this.canvas?.getContext('2d', { alpha: false });
         this.theme = 'light';
-        this.language = 'ru';
+        this.language = 'en';
         
         // Константы для отрисовки
         this.weeksPerYear = 52;
         this.totalYears = 91;
         this.isMobile = document.body.classList.contains('is-mobile');
-        this.setMobileMode(this.isMobile);
         
         // Анимация последней недели
         this.animationFrame = null;
@@ -21,6 +23,9 @@ export class Calendar {
         this.pulseSpeed = 0.003; // Скорость пульсации
         this.minOpacity = 0.3; // Минимальная прозрачность
         this.maxOpacity = 1.0; // Максимальная прозрачность
+
+        // Вызываем setMobileMode после всех инициализаций
+        this.setMobileMode(this.isMobile);
     }
 
     init() {
@@ -60,8 +65,8 @@ export class Calendar {
         // Сохраняем livedWeeks в атрибут canvas для восстановления при ресайзе
         this.canvas.setAttribute('data-lived-weeks', livedWeeks);
 
-        const colors = themes[this.theme];
-        const labels = translations[this.language];
+        const colors = this.getThemeColors();
+        const labels = this.getLabels();
 
         // Очистка canvas
         this.ctx.fillStyle = colors.background;
@@ -174,7 +179,7 @@ export class Calendar {
             }
             
             // Очищаем только область последней клетки для оптимизации
-            this.ctx.fillStyle = themes[this.theme].background;
+            this.ctx.fillStyle = this.getThemeColors().background;
             this.ctx.fillRect(x - 1, y - 1, this.cellSize + 2, this.cellSize + 2);
             
             // Рисуем последнюю неделю с текущей прозрачностью
@@ -192,14 +197,6 @@ export class Calendar {
         
         // Запускаем анимацию
         this.animationFrame = requestAnimationFrame(animate);
-    }
-
-    updateTheme(theme) {
-        this.theme = theme;
-        
-        // Перерисовываем с сохранением текущего состояния календаря
-        const livedWeeks = parseInt(this.canvas?.getAttribute('data-lived-weeks') || '0');
-        this.draw(livedWeeks);
     }
 
     setLanguage(lang) {
@@ -332,5 +329,20 @@ export class Calendar {
             this.setupCanvas();
             this.draw(parseInt(livedWeeks) || 0);
         }
+    }
+
+    getThemeColors() {
+        const rootStyles = getComputedStyle(document.documentElement);
+        return {
+            background: rootStyles.getPropertyValue(`--background-${this.theme}`).trim(),
+            text: rootStyles.getPropertyValue(`--text-${this.theme}`).trim(),
+            grid: rootStyles.getPropertyValue(`--grid-${this.theme}`).trim(),
+            lived: rootStyles.getPropertyValue(`--lived-${this.theme}`).trim(),
+            future: rootStyles.getPropertyValue(`--future-${this.theme}`).trim()
+        };
+    }
+
+    getLabels() {
+        return this.translations;
     }
 }

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <!-- Обновляем viewport для лучшей поддержки мобильных устройств -->
@@ -10,7 +10,7 @@
     <meta name="color-scheme" content="light dark"> 
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#1c1c1c" media="(prefers-color-scheme: dark)">
-    <meta name="description" content="Life Calendar - визуализация жизни в неделях">
+    <meta name="description" content="Life Calendar - visualize your life in weeks">
     <meta name="author" content="someeeday">
     
     <!-- Добавляем Apple-специфичные мета-теги -->
@@ -37,7 +37,7 @@
     <noscript><div><img src="https://mc.yandex.ru/watch/99837348" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
     <!-- /Yandex.Metrika counter -->
     
-    <link rel="icon" type="image/png" sizes="64x64" href="/icons/favicon.png">
+    <link rel="icon" type="image/png" sizes="64x64" href="/calendar/icons/favicon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" 
@@ -50,89 +50,75 @@
     <meta http-equiv="Expires" content="0">
 </head>
 <body>
+    <!-- Добавляем оверлей для календаря -->
+    <div class="calendar-overlay"></div>
     <div class="app">
-        <header class="header">
-            <h1 class="header__title">Life Calendar</h1>
+        <header>
+            <nav class="navbar">
+                <div class="navbar__content">
+                    <h1>Life Calendar</h1>
+                    <div class="navbar__links">
+                        <a href="https://t.me/LifeCalendarRobot" target="_blank" class="nav-link">
+                            <svg class="nav-icon" viewBox="0 0 24 24">
+                                <path fill="currentColor" d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.896-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.244-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635.099-.002.324.024.468.143.119.096.152.224.168.314.024.13.035.267.019.458z"/>
+                            </svg>
+                            Telegram Bot
+                        </a>
+                        <a href="https://github.com/someeeday/Life-Calendar" target="_blank" class="nav-link">
+                            <svg class="nav-icon" viewBox="0 0 24 24">
+                                <path fill="currentColor" d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+                            </svg>
+                            GitHub
+                        </a>
+                    </div>
+                </div>
+            </nav>
+            <div class="header__content">
+                <h2>Visualize your life in weeks</h2>
+                <form id="settingsForm" class="settings-form" autocomplete="off" novalidate>
+                    <div class="date-input-container">
+                        <input type="text" 
+                               id="birthdate-input" 
+                               name="birthdate" 
+                               class="form-input" 
+                               placeholder="DD.MM.YYYY"
+                               aria-label="Date of birth">
+                        <span id="calendar-icon" class="calendar-icon"></span>
+                    </div>
+                    <div id="birthdate-error" class="error-message"></div>
+                    <div id="custom-calendar" class="custom-calendar"></div>
+                    <button type="button" class="button button--primary" id="create-calendar-btn">Create calendar</button>
+                </form>
+            </div>
         </header>
+
         <main class="main">
-            <div class="container">
-                <aside class="settings">
-                    <form class="settings__form" id="settingsForm" autocomplete="off" novalidate>
-                        <div class="lang-theme-container">
-
-                            <div class="form-group">
-                                <label for="lang-select" class="form-label" id="lang_select_lang" 
-                                       data-text-ru="Язык"
-                                       data-text-en="Language">
-                                    Язык
-                                </label>
-                                <select class="form-select" 
-                                        id="lang-select" 
-                                        name="lang">
-                                    <option value="ru">Русский</option>
-                                    <option value="en">English</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="theme-select" class="form-label" id="lang_set_theme" 
-                                       data-text-ru="Тема" 
-                                       data-text-en="Theme">
-                                    Тема
-                                </label>
-                                <select class="form-select" 
-                                        id="theme-select" 
-                                        name="theme">
-                                    <option value="light" data-text-ru="Светлая" data-text-en="Light">Светлая</option>
-                                    <option value="dark" data-text-ru="Тёмная" data-text-en="Dark">Тёмная</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="birthdate-input" class="form-label" id="lang_set_birthday" 
-                                   data-text-ru="Дата рождения" 
-                                   data-text-en="Birth date">
-                                Дата рождения
-                            </label>
-                            <div class="date-input-container">
-                                <input type="text" 
-                                       id="birthdate-input" 
-                                       name="birthdate"
-                                       class="form-input"
-                                       aria-label="Date of birth">
-                                <span id="calendar-icon" class="calendar-icon"></span>
-                            </div>
-                            <div id="birthdate-error" class="error-message"></div> <!-- Элемент для ошибок -->
-                            <div id="custom-calendar" class="custom-calendar"></div>
-                        </div>
-                    
-                        <button type="button" 
-                                class="button button--primary" 
-                                id="create-calendar-btn"
-                                data-text-ru="Создать календарь" 
-                                data-text-en="Create calendar">
-                            Create calendar
-                        </button>
-                    </form>
-                </aside>
-
-                <section class="calendar">
-                    <canvas id="lifeCanvas" aria-label="Life Calendar visualization"></canvas>
-                </section>
+            <div class="calendar">
+                <canvas id="lifeCanvas" aria-label="Life Calendar visualization"></canvas>
             </div>
         </main>
+
         <footer class="footer">
             <div class="footer__content">
-                <span class="footer__text">Created by</span>
-                <a href="#" class="clickable-link" id="author-link">@someeeday</a>
-            </div>
-            <div id="hidden-content" class="hidden-content">
-                <p id="hidden-text"></p>
+                <div class="footer__links">
+                    <a href="/privacy" class="footer__link">Privacy</a>
+                    <a href="/terms" class="footer__link">Terms</a>
+                    <a href="https://t.me/someeeday" class="footer__link">Contact</a>
+                </div>
+                <p class="footer__copyright">© <span id="copyright-years">2025</span> Life Calendar. All rights reserved.</p>
             </div>
         </footer>
     </div>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script type="module" src="/calendar/js/app.js"></script>
+    <script>
+        // Динамический расчёт годов для копирайта
+        const startYear = 2025;
+        const currentYear = new Date().getFullYear();
+        const copyrightYears = document.getElementById('copyright-years');
+        copyrightYears.textContent = currentYear > startYear 
+            ? `${startYear}-${currentYear}`
+            : startYear;
+    </script>
 </body>
 </html>
